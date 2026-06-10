@@ -1,4 +1,4 @@
-name: Build Android APK
+﻿name: Build Android APK
 
 on:
   workflow_dispatch:
@@ -8,12 +8,12 @@ on:
       - 'android/**'
       - '.github/workflows/build-android.yml'
 
+env:
+  ANDROID_HOME: /usr/local/lib/android/sdk
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./android
 
     steps:
       - name: Checkout
@@ -25,16 +25,15 @@ jobs:
           java-version: 17
           distribution: 'temurin'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: 8.5
-
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'tools platform-tools platforms;android-34 build-tools;34.0.0'
 
       - name: Build Debug APK
+        working-directory: ./android
         run: |
+          chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
       - name: Upload Debug APK
@@ -44,50 +43,37 @@ jobs:
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Build Release AAB
+      - name: Build Release
+        working-directory: ./android
         run: |
-          ./gradlew bundleRelease --no-daemon
+          ./gradlew bundleRelease assembleRelease --no-daemon
 
-      - name: Create keystore from secret
+      - name: Sign artifacts
+        working-directory: ./android
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 -d > ../keystore.jks
-
-      - name: Sign Release AAB
-        run: |
           jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA256 \
             -keystore ../keystore.jks \
-            -storepass ${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
-            -keypass ${{ secrets.ANDROID_KEY_PASSWORD }} \
+            -storepass "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            -keypass "${{ secrets.ANDROID_KEY_PASSWORD }}" \
             app/build/outputs/bundle/release/app-release.aab \
-            ${{ secrets.ANDROID_KEY_ALIAS }}
-
-      - name: Upload Signed Release AAB
-        uses: actions/upload-artifact@v4
-        with:
-          name: travel-planner-release-signed
-          path: android/app/build/outputs/bundle/release/*.aab
-          if-no-files-found: warn
-
-      - name: Build Signed APK
-        run: |
-          ./gradlew assembleRelease --no-daemon
-
-      - name: Sign Release APK
-        run: |
+            "${{ secrets.ANDROID_KEY_ALIAS }}"
           jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA256 \
             -keystore ../keystore.jks \
-            -storepass ${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
-            -keypass ${{ secrets.ANDROID_KEY_PASSWORD }} \
+            -storepass "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            -keypass "${{ secrets.ANDROID_KEY_PASSWORD }}" \
             app/build/outputs/apk/release/app-release-unsigned.apk \
-            ${{ secrets.ANDROID_KEY_ALIAS }}
+            "${{ secrets.ANDROID_KEY_ALIAS }}"
 
-      - name: Upload Signed APK
+      - name: Upload Signed Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: travel-planner-signed-apk
-          path: android/app/build/outputs/apk/release/*.apk
+          name: travel-planner-signed-release
+          path: |
+            android/app/build/outputs/bundle/release/*.aab
+            android/app/build/outputs/apk/release/*-unsigned.apk
           if-no-files-found: warn
 
       - name: Notify
         if: success()
-        run: echo "Android APK/AAB signed and ready for store submission!"
+        run: echo "Build complete! Signed AAB and APK ready!"
