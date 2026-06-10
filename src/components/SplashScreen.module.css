@@ -1,12 +1,53 @@
-.overlay { position: fixed; inset: 0; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); display: flex; align-items: center; justify-content: center; z-index: 999; transition: opacity 0.4s ease; }
+﻿.overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #1a1a4e 0%, #2d3a8c 50%, #4fc3f7 100%);
+  opacity: 1; transition: opacity 0.4s ease-out;
+}
 .hide { opacity: 0; pointer-events: none; }
-.content { text-align: center; color: #fff; animation: fadeInUp 0.6s ease-out; }
-.globe { font-size: 64px; margin-bottom: 16px; animation: bounce 2s infinite; }
-.title { font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
-.tagline { font-size: 16px; opacity: 0.9; }
-.tagline2 { font-size: 14px; opacity: 0.7; margin-top: 4px; }
-.spinner { width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 24px auto 12px; }
-.hint { font-size: 12px; opacity: 0.5; animation: pulse 2s infinite; }
-@keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+.content {
+  display: flex; flex-direction: column; align-items: center;
+  animation: fadeUp 0.8s ease-out;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.globe {
+  font-size: 80px; margin-bottom: 16px;
+  animation: float 2s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.title {
+  font-size: 42px; font-weight: 800; letter-spacing: 8px;
+  background: linear-gradient(135deg, #fff, #bbdefb);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.tagline { color: rgba(255,255,255,0.7); font-size: 15px; margin-top: 14px; letter-spacing: 2px; }
+.tagline2 { color: rgba(255,255,255,0.5); font-size: 13px; margin-top: 4px; }
+
+.spinner {
+  margin-top: 40px; width: 26px; height: 26px;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top-color: #fff; border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
 @keyframes spin { to { transform: rotate(360deg); } }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.hint {
+  position: absolute; bottom: 40px;
+  color: rgba(255,255,255,0.3); font-size: 12px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
