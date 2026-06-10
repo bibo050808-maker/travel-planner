@@ -1,4 +1,4 @@
-﻿// Top-level build file
+// Top-level build file
 buildscript {
     ext {
         agp_version = '8.2.2'
