@@ -1,11 +1,11 @@
-import { AMAP_KEY, LEAN_APP_ID, LEAN_APP_KEY, API_BASE } from '../config';
+import { AMAP_KEY as CFG_AMAP_KEY, LEAN_APP_ID as CFG_LEAN_ID, LEAN_APP_KEY as CFG_LEAN_KEY, API_BASE as CFG_API_BASE } from '../config';
 // API Service - Multi-platform data integration
 // Supports: 高德地图 API (maps/POI/routes), LeanCloud (user data), custom backend
 
-var AMAP_KEY = '';        // 高德地图 Web API Key
-var LEAN_APP_ID = '';     // LeanCloud App ID
-var LEAN_APP_KEY = '';    // LeanCloud App Key
-var API_BASE = '';        // Custom backend URL
+var AMAP_KEY = CFG_AMAP_KEY || '';        // 高德地图 Web API Key
+var LEAN_APP_ID = CFG_LEAN_ID || '';     // LeanCloud App ID
+var LEAN_APP_KEY = CFG_LEAN_KEY || '';    // LeanCloud App Key
+var API_BASE = CFG_API_BASE || '';        // Custom backend URL
 
 // ==========================================
 // 高德地图 API（需要先注册获取 Key）
