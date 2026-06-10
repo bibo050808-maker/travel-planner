@@ -41,8 +41,10 @@ public class MainActivity extends AppCompatActivity {
     private FrameLayout webContainer;
 
     // Change this to your deployed URL
-    private static final String APP_URL = "file:///android_asset/www/index.html";
-    private static final String APP_DOMAIN = "localhost";
+    private static final String ONLINE_URL = "https://bibo050808-maker.github.io/travel-planner/";
+    private static final String LOCAL_URL = "file:///android_asset/www/index.html";
+    private static final String ONLINE_DOMAIN = "bibo050808-maker.github.io";
+    private static final String LOCAL_DOMAIN = "localhost";
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -169,7 +171,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadApp() {
-        webView.loadUrl(APP_URL);
+        // Try online first, fall back to offline local content
+        webView.loadUrl(ONLINE_URL);
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request,
+                                        WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                if (request.isForMainFrame()) {
+                    // Online failed, fall back to offline
+                    view.loadUrl(LOCAL_URL);
+                }
+            }
+        });
     }
 
     @Override
