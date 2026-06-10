@@ -1,4 +1,4 @@
-﻿package com.travelplanner.app;
+package com.travelplanner.app;
 
 import android.content.Context;
 import android.content.Intent;

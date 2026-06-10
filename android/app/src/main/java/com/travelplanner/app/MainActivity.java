@@ -1,4 +1,4 @@
-﻿package com.travelplanner.app;
+package com.travelplanner.app;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
