@@ -45,18 +45,49 @@ jobs:
           if-no-files-found: error
 
       - name: Build Release AAB
-        if: github.ref == 'refs/heads/master'
         run: |
           ./gradlew bundleRelease --no-daemon
 
-      - name: Upload Release AAB
-        if: github.ref == 'refs/heads/master'
+      - name: Create keystore from secret
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 -d > ../keystore.jks
+
+      - name: Sign Release AAB
+        run: |
+          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA256 \
+            -keystore ../keystore.jks \
+            -storepass ${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
+            -keypass ${{ secrets.ANDROID_KEY_PASSWORD }} \
+            app/build/outputs/bundle/release/app-release.aab \
+            ${{ secrets.ANDROID_KEY_ALIAS }}
+
+      - name: Upload Signed Release AAB
         uses: actions/upload-artifact@v4
         with:
-          name: travel-planner-release-aab
+          name: travel-planner-release-signed
           path: android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: warn
+
+      - name: Build Signed APK
+        run: |
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Sign Release APK
+        run: |
+          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA256 \
+            -keystore ../keystore.jks \
+            -storepass ${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
+            -keypass ${{ secrets.ANDROID_KEY_PASSWORD }} \
+            app/build/outputs/apk/release/app-release-unsigned.apk \
+            ${{ secrets.ANDROID_KEY_ALIAS }}
+
+      - name: Upload Signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: travel-planner-signed-apk
+          path: android/app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
 
       - name: Notify
         if: success()
-        run: echo "Android APK/AAB build completed!"
+        run: echo "Android APK/AAB signed and ready for store submission!"
