@@ -8,9 +8,6 @@ on:
       - 'android/**'
       - '.github/workflows/build-android.yml'
 
-env:
-  ANDROID_HOME: /usr/local/lib/android/sdk
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,24 +22,19 @@ jobs:
           java-version: 17
           distribution: 'temurin'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.5
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
           packages: 'tools platform-tools platforms;android-34 build-tools;34.0.0'
 
-      - name: Install SDK platform
-        working-directory: ./android
-        run: |
-          yes | sdkmanager "platforms;android-34" "build-tools;34.0.0" 2>/dev/null || true
-
-      - name: Generate Gradle wrapper
-        working-directory: ./android
-        run: |
-          /home/runner/gradle-installations/installs/gradle-8.5/bin/gradle wrapper --gradle-version 8.5
-
       - name: Build Debug APK
         working-directory: ./android
-        run: ./gradlew assembleDebug --no-daemon
+        run: gradle assembleDebug --no-daemon
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
@@ -51,10 +43,13 @@ jobs:
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
-      - name: Build Release
+      - name: Build Release AAB
         working-directory: ./android
-        run: |
-          ./gradlew bundleRelease assembleRelease --no-daemon
+        run: gradle bundleRelease --no-daemon
+
+      - name: Build Release APK
+        working-directory: ./android
+        run: gradle assembleRelease --no-daemon
 
       - name: Sign artifacts
         working-directory: ./android
@@ -76,7 +71,7 @@ jobs:
       - name: Upload Signed Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: travel-planner-signed-release
+          name: travel-planner-release-signed
           path: |
             android/app/build/outputs/bundle/release/*.aab
             android/app/build/outputs/apk/release/*-unsigned.apk
