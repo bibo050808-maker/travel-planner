@@ -41,8 +41,8 @@ public class MainActivity extends AppCompatActivity {
     private FrameLayout webContainer;
 
     // Change this to your deployed URL
-    private static final String APP_URL = "https://bibo050808-maker.github.io/travel-planner/";
-    private static final String APP_DOMAIN = "bibo050808-maker.github.io";
+    private static final String APP_URL = "file:///android_asset/www/index.html";
+    private static final String APP_DOMAIN = "localhost";
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
