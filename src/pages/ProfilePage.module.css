@@ -1,24 +1,24 @@
-.page { padding: 20px; max-width: 600px; margin: 0 auto; }
-.header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
-.avatar { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #4fc3f7, #1976d2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.avatarIcon { font-size: 28px; filter: brightness(10); }
+﻿.page { padding: 20px; max-width: 640px; margin: 0 auto; animation: fadeInUp 0.4s ease-out; }
+.header { display: flex; align-items: center; gap: 16px; padding: 20px; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); border-radius: var(--radius-xl); color: #fff; margin-bottom: 20px; }
+.avatar { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; }
 .headerInfo { flex: 1; }
-.title { font-size: 22px; font-weight: 700; margin: 0; }
-.subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-.statsRow { display: flex; gap: 8px; margin-bottom: 24px; }
-.statCard { flex: 1; text-align: center; padding: 14px 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; }
-.statNum { font-size: 24px; font-weight: 700; color: #4fc3f7; }
+.headerTitle { font-size: 20px; font-weight: 700; }
+.headerSub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+.statsRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
+.statCard { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+.statNum { font-size: 22px; font-weight: 700; color: var(--color-primary); }
 .statLabel { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
-.section { margin-bottom: 24px; }
-.sectionTitle { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
-.empty { text-align: center; padding: 20px; color: var(--text-secondary); font-size: 13px; }
-.favItem, .reviewItem { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; cursor: pointer; transition: transform 0.15s; }
-.favItem:hover, .reviewItem:hover { transform: scale(0.98); }
-.favIcon { font-size: 22px; width: 30px; text-align: center; flex-shrink: 0; }
-.favName { font-weight: 600; font-size: 14px; flex: 1; }
+.section { margin: 20px 0; }
+.sectionTitle { font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.favItem { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; cursor: pointer; transition: all var(--transition); }
+.favItem:hover { transform: translateX(4px); }
+.favIcon { font-size: 20px; width: 32px; text-align: center; flex-shrink: 0; }
+.favName { flex: 1; font-size: 14px; font-weight: 500; }
 .favProvince { font-size: 11px; color: var(--text-secondary); }
-.favArrow { color: var(--text-secondary); font-size: 14px; }
-.reviewItem { flex-direction: column; align-items: stretch; }
-.reviewHeader { font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; }
-.reviewText { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.favArrow { color: var(--text-tertiary); }
+.reviewItem { padding: 12px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; cursor: pointer; transition: all var(--transition); }
+.reviewItem:hover { transform: translateX(4px); }
+.reviewHeader { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 500; margin-bottom: 4px; }
 .reviewDate { font-size: 11px; color: var(--text-secondary); font-weight: 400; }
+.reviewText { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.empty { text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 13px; }
