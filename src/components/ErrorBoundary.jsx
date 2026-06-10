@@ -1,3 +1,4 @@
+import React from 'react'
 import { createElement as h } from 'react'
 
 export default class ErrorBoundary extends React.Component {
