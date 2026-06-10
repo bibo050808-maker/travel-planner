@@ -1,0 +1,7 @@
+.card { padding: 12px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.rating { font-size: 13px; font-weight: 600; color: #f57f17; }
+.date { font-size: 11px; color: var(--text-secondary); }
+.text { font-size: 13px; line-height: 1.6; color: var(--text); margin: 0 0 6px 0; }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag { padding: 2px 8px; background: rgba(79,195,247,0.1); border-radius: 4px; font-size: 10px; color: var(--color-primary-dark); }

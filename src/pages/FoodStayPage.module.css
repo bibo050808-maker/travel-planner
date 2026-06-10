@@ -1,0 +1,35 @@
+﻿.page { padding: 20px; max-width: 600px; margin: 0 auto; }
+.header { margin-bottom: 16px; }
+.title { font-size: 24px; font-weight: 700; }
+.title span { color: var(--color-primary); }
+.subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+.tabSwitch { display: flex; background: var(--bg-input); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+.tabBtn { flex: 1; padding: 12px; text-align: center; font-size: 14px; font-weight: 600; cursor: pointer; background: none; border: none; color: var(--text-secondary); transition: all 0.2s; }
+.tabActive { background: var(--color-primary); color: #fff; }
+
+.sortRow { display: flex; gap: 6px; margin-bottom: 14px; }
+.sortBtn { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-secondary); font-size: 12px; cursor: pointer; transition: all 0.15s; }
+.sortBtn:hover { border-color: var(--color-primary); }
+.sortActive { background: rgba(79,195,247,0.12); border-color: var(--color-primary); color: var(--color-primary-dark); font-weight: 600; }
+
+.cardList { display: flex; flex-direction: column; gap: 10px; }
+.card { display: flex; gap: 12px; padding: 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; transition: transform 0.15s; }
+.card:hover { transform: scale(0.99); }
+.cardIcon { width: 48px; height: 48px; border-radius: 10px; background: var(--bg-input); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+.cardBody { flex: 1; min-width: 0; }
+.cardName { font-size: 15px; font-weight: 600; }
+.cardCat { font-size: 11px; color: var(--text-secondary); margin: 2px 0; }
+.cardRating { font-size: 12px; color: #f57f17; margin: 2px 0; }
+.cardTags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; align-items: center; }
+.cardTag { padding: 2px 7px; background: var(--bg-input); border-radius: 4px; font-size: 10px; color: var(--text-secondary); }
+.cardDist { padding: 2px 7px; font-size: 10px; color: var(--text-secondary); }
+.cardCrowd { padding: 2px 7px; font-size: 10px; font-weight: 600; }
+.cardRec { padding: 2px 7px; font-size: 10px; color: var(--color-primary); }
+.stars { font-size: 11px; margin-left: 4px; }
+
+.empty { text-align: center; padding: 80px 20px; color: var(--text-secondary); font-size: 14px; }
+
+.cityRow { margin-bottom: 16px; }
+.citySelect { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text); font-size: 15px; font-weight: 600; outline: none; cursor: pointer; transition: border-color 0.2s; appearance: auto; }
+.citySelect:focus { border-color: var(--color-primary); }
