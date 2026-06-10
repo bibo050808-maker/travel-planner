@@ -54,7 +54,7 @@ jobs:
       - name: Sign artifacts
         working-directory: ./android
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 -d > ../keystore.jks
+          printf "`%s" "${{ secrets.ANDROID_KEYSTORE }}" | base64 -d > ../keystore.jks
           jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA256 \
             -keystore ../keystore.jks \
             -storepass "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
