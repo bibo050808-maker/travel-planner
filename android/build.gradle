@@ -1,20 +1,4 @@
 // Top-level build file
-buildscript {
-    ext {
-        agp_version = '8.2.2'
-    }
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath "com.android.tools.build:gradle:$agp_version"
-    }
-}
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
+plugins {
+    id 'com.android.application' version '8.2.2' apply false
 }
