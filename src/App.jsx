@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useApp } from './store/AppContext'
 import SearchPage from './pages/SearchPage'
@@ -89,22 +89,9 @@ export default function App() {
                 onClick={() => switchTab(tab)} title={tab.label}>
                 <Icon name={tab.icon} size={22} className={styles.sideIcon} />
                 <span className={styles.sideLabel}>{tab.label}</span>
-              </button>
-            ))}
-          <button
-            className={`${styles.navItem} ${currentTab === 'profile' ? styles.active : ''}`}
-            onClick={() => switchTab({ id: 'profile', label: '我的', icon: 'user', path: '/profile' })}>
-            <Icon name="user" size={20} className={styles.navIcon} />
-            <span className={styles.navLabel}>我的</span>
-          </button>
-          
-          <button className={`${styles.sideBtn} ${currentTab === 'profile' ? styles.active : ''}`}
-            onClick={() => switchTab({ id: 'profile', label: '我的', icon: 'user', path: '/profile' })} title="我的">
-            <Icon name="user" size={22} className={styles.sideIcon} />
-            <span className={styles.sideLabel}>我的</span>
-          </button>
-          
-            <button className={`${styles.sideBtn} ${styles.themeBtn}`} onClick={toggleTheme} title="切换主题">
+             </button>
+           ))} 
+           <button className={`${styles.sideBtn} ${styles.themeBtn}`} onClick={toggleTheme} title="切换主题">
               <Icon name={state.theme === 'light' ? 'moon' : 'sun'} size={22} className={styles.sideIcon} />
               <span className={styles.sideLabel}>{state.theme === 'light' ? '暗黑' : '亮色'}</span>
             </button>
@@ -135,3 +122,4 @@ export default function App() {
     </>
   )
 }
+
