@@ -70,7 +70,7 @@ export function generateGuide(tripCities, tripRoutes, style) {
     var attrs = (city.attractions || []).slice(0, 4);
     html += '<div class="day"><strong>\uD83D\uDCCD Day ' + (idx*3+2) + ' \u6DF1\u5EA6\u6E38 ' + city.name + '</strong><br/>';
     var labels = ['\u4E0A\u5348', '\u4E0B\u5348', '\u665A\u4E0A'];
-    if (d[1]) d[1].forEach(function(t, i) { html += '\u2022 ' + (labels[i]||'') + '\uFF1A' + t + '<br/>'; });
+    if (tmpl.days[1]) tmpl.days[1].forEach(function(t, i) { html += '\u2022 ' + (labels[i]||'') + '\uFF1A' + t + '<br/>'; });
     html += '</div>';
     html += '<div class="day"><strong>\uD83D\uDCCD Day ' + (idx*3+3) + ' \u7F8E\u98DF\u4E0E\u79BB\u5F00</strong><br/>';
     html += '\u2022 \u4E0A\u5348\uFF1A\u54C1\u5C1D\u5F53\u5730\u65E9\u9910\uFF0C\u901B\u5F53\u5730\u5E02\u573A<br/>';
