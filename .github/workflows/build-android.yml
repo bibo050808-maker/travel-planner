@@ -1,4 +1,4 @@
-﻿name: Build Android APK
+name: Build Android APK
 
 on:
   workflow_dispatch:
@@ -7,6 +7,9 @@ on:
     paths:
       - 'android/**'
       - '.github/workflows/build-android.yml'
+
+env:
+  ANDROID_HOME: /usr/local/lib/android/sdk
 
 jobs:
   build:
@@ -41,26 +44,31 @@ jobs:
         with:
           name: travel-planner-debug
           path: android/app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
 
-      - name: Build Release AAB
+      - name: Build Release
         working-directory: ./android
-        run: gradle bundleRelease --no-daemon
+        run: |
+          gradle bundleRelease assembleRelease --no-daemon
 
-      - name: Build Release APK
-        working-directory: ./android
-        run: gradle assembleRelease --no-daemon
-
-      - name: Sign artifacts
+      - name: Create & verify keystore
         working-directory: ./android
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 -d > ../keystore.jks
+          keytool -list -keystore ../keystore.jks -storepass "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" -alias "${{ secrets.ANDROID_KEY_ALIAS }}"
+
+      - name: Sign AAB
+        working-directory: ./android
+        run: |
           jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA256 \
             -keystore ../keystore.jks \
             -storepass "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
             -keypass "${{ secrets.ANDROID_KEY_PASSWORD }}" \
             app/build/outputs/bundle/release/app-release.aab \
             "${{ secrets.ANDROID_KEY_ALIAS }}"
+
+      - name: Sign APK
+        working-directory: ./android
+        run: |
           jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA256 \
             -keystore ../keystore.jks \
             -storepass "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
@@ -75,7 +83,6 @@ jobs:
           path: |
             android/app/build/outputs/bundle/release/*.aab
             android/app/build/outputs/apk/release/*-unsigned.apk
-          if-no-files-found: warn
 
       - name: Notify
         if: success()
