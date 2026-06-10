@@ -1,0 +1,57 @@
+#!/bin/sh
+
+# ?? (TravelBuddy) self-contained Gradle wrapper
+# This script handles SDK installation and Gradle provisioning automatically
+
+set -e
+
+SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+PROJECT_DIR="$SCRIPT_DIR"
+
+# Install Android SDK platform if needed
+if [ -n "$ANDROID_HOME" ] && [ ! -d "$ANDROID_HOME/platforms/android-34" ]; then
+    echo "Installing Android SDK platform 34..."
+    SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+    if [ ! -f "$SDKMANAGER" ]; then
+        SDKMANAGER="$ANDROID_HOME/tools/bin/sdkmanager"
+    fi
+    if [ -f "$SDKMANAGER" ]; then
+        yes | "$SDKMANAGER" "platforms;android-34" "build-tools;34.0.0" 2>/dev/null || true
+    fi
+fi
+
+# Download Gradle wrapper jar if not present
+if [ ! -f "$PROJECT_DIR/gradle/wrapper/gradle-wrapper.jar" ]; then
+    mkdir -p "$PROJECT_DIR/gradle/wrapper"
+    echo "Downloading Gradle 8.5..."
+    GRADLE_URL="https://services.gradle.org/distributions/gradle-8.5-bin.zip"
+    TMP_ZIP="/tmp/gradle-bin-$$.zip"
+    TMP_DIR="/tmp/gradle-extract-$$"
+
+    if command -v curl > /dev/null 2>&1; then
+        curl -sL "$GRADLE_URL" -o "$TMP_ZIP"
+    elif command -v wget > /dev/null 2>&1; then
+        wget -q "$GRADLE_URL" -O "$TMP_ZIP"
+    else
+        echo "Error: curl or wget required" >&2
+        exit 1
+    fi
+
+    mkdir -p "$TMP_DIR"
+    unzip -q -o "$TMP_ZIP" -d "$TMP_DIR"
+    cp "$TMP_DIR"/gradle-8.5/lib/gradle-wrapper-*.jar "$PROJECT_DIR/gradle/wrapper/gradle-wrapper.jar" 2>/dev/null || true
+    rm -rf "$TMP_ZIP" "$TMP_DIR"
+    chmod 644 "$PROJECT_DIR/gradle/wrapper/gradle-wrapper.jar" 2>/dev/null || true
+fi
+
+# Determine Java command
+if [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
+    JAVACMD="$JAVA_HOME/bin/java"
+elif command -v java > /dev/null 2>&1; then
+    JAVACMD="java"
+else
+    echo "Error: Java not found" >&2
+    exit 1
+fi
+
+exec "$JAVACMD" -jar "$PROJECT_DIR/gradle/wrapper/gradle-wrapper.jar" "$@"
