@@ -1,8 +1,9 @@
-﻿import { defineConfig } from 'vite'
+import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  base: './',
   plugins: [
     react(),
     VitePWA({
@@ -15,8 +16,8 @@ export default defineConfig({
         theme_color: '#4fc3f7',
         background_color: '#f0f2f5',
         display: 'standalone',
-        scope: '/',
-        start_url: '/',
+        scope: '/travel-planner/',
+        start_url: '/travel-planner/',
         orientation: 'portrait-primary',
         lang: 'zh-CN',
         icons: [
