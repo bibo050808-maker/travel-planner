@@ -46,7 +46,7 @@
 html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 
 body {
-  font-family: 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', 'MiSans', 'Noto Sans SC', 'Segoe UI', sans-serif;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
