@@ -5,7 +5,7 @@
 // ① 高德地图 Web API
 // 注册获取 Key: https://lbs.amap.com/dev/key/app
 // 免费额度: 30000次/天
-export const AMAP_KEY = '';
+ export const AMAP_KEY = 'f0b67daabd8b953cefc7bd8a9385062b';
 
 // ② LeanCloud 数据存储
 // 注册: https://console.leancloud.app/apps
