@@ -16,6 +16,7 @@ export default function FoodStayPage() {
   const [cityId, setCityId] = useState(state.selectedCity?.id || '')
 
   useEffect(() => {
+  const [expandedItem, setExpandedItem] = useState(null)
     getAllCities().then(all => {
       setCities(all)
       if (!cityId && all.length > 0) setCityId(all[0].id)
@@ -51,6 +52,8 @@ export default function FoodStayPage() {
 
   const displayFood = sortFood(foodData, foodSort)
   const displayStay = sortStay(stayData, staySort)
+  const expandedFood = foodData.find(function(f) { return f.id === expandedItem })
+  const expandedStay = stayData.find(function(s) { return s.id === expandedItem })
 
   const stars = (n) => '⭐'.repeat(Math.round(n))
 
@@ -88,7 +91,7 @@ export default function FoodStayPage() {
           </div>
           <div className={styles.cardList}>
             {displayFood.map(item => (
-              <div key={item.id} className={styles.card}>
+              <div key={item.id} className={styles.card} onClick={function() { setExpandedItem(expandedItem === item.id ? null : item.id) }}>
                 <div className={styles.cardIcon}>{item.category.includes('海鲜') ? '🦐' : item.category.includes('火锅') ? '🫕' : item.category.includes('小吃') ? '🥟' : '🍜'}</div>
                 <div className={styles.cardBody}>
                   <div className={styles.cardName}>{item.name}</div>
@@ -101,6 +104,16 @@ export default function FoodStayPage() {
                   </div>
                 </div>
               </div>
+            {expandedItem === item.id ? (
+              <div className={styles.expandedDetail}>
+                <p><strong>📋 详情</strong></p>
+                <p>{item.name} · {item.category || item.stars}</p>
+                <p>⭐ {item.rating} · ¥{item.avgPrice}/人</p>
+                <p>🏷️ {(item.tags || []).join(', ')}</p>
+                <p>📍 约 {item.distance}km</p>
+                <p>👍 {(item.recommendRate || 90)}% 推荐 · {(item.reviewCount || 500)}+ 评价</p>
+              </div>
+            ) : null}
             ))}
           </div>
         </div>
@@ -130,6 +143,16 @@ export default function FoodStayPage() {
                   </div>
                 </div>
               </div>
+            {expandedItem === item.id ? (
+              <div className={styles.expandedDetail}>
+                <p><strong>📋 详情</strong></p>
+                <p>{item.name} · {item.category || item.stars}</p>
+                <p>⭐ {item.rating} · ¥{item.avgPrice}/晚</p>
+                <p>🏷️ {(item.tags || []).join(', ')}</p>
+                <p>📍 约 {item.distance}km</p>
+                <p>👍 {(item.recommendRate || 90)}% 推荐 · {(item.reviewCount || 500)}+ 评价</p>
+              </div>
+            ) : null}
             ))}
           </div>
         </div>
