@@ -48,7 +48,7 @@ export default function GuidePage() {
   };
 
   var doGenerate = function() {
-    if (tripCities.length === 0) return;
+    if (tripCities.length === 0) { alert('请先在搜索框中添加至少一个城市'); return; }
     var result = generateGuide(tripCities, state.tripRoutes || []);
     setGuideHtml(result.html);
     setEditText(result.text);

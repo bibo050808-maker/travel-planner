@@ -14,7 +14,7 @@ const initialState = {
     travelMonth: null,
   },
   favorites: [],
-  tripCities: [],
+  tripCities: (function() { try { var s = localStorage.getItem('trip_cities'); return s ? JSON.parse(s) : []; } catch(e) { return []; } })(),
   tripRoutes: [],
   theme: 'light',
   isLoading: true,
@@ -45,17 +45,17 @@ function appReducer(state, action) {
     case 'ADD_TRIP_CITY': {
       const city = action.payload
       if (state.tripCities.find(c => c.id === city.id)) return state
-      return { ...state, tripCities: [...state.tripCities, city] }
+      var nc = [...state.tripCities, city]; try { localStorage.setItem('trip_cities', JSON.stringify(nc)); } catch(e) {} return { ...state, tripCities: nc }
     }
     case 'REMOVE_TRIP_CITY':
-      return { ...state, tripCities: state.tripCities.filter(c => c.id !== action.payload) }
+      var fc = state.tripCities.filter(function(c) { return c.id !== action.payload }); try { localStorage.setItem('trip_cities', JSON.stringify(fc)); } catch(e) {} return { ...state, tripCities: fc }
     case 'ADD_TRIP_ROUTE': {
       const route = action.payload
       if (state.tripRoutes.find(r => r.fromId === route.fromId && r.toId === route.toId)) return state
       return { ...state, tripRoutes: [...state.tripRoutes, route] }
     }
     case 'CLEAR_TRIP':
-      return { ...state, tripCities: [], tripRoutes: [] }
+      try { localStorage.removeItem('trip_cities'); } catch(e) {} return { ...state, tripCities: [], tripRoutes: [] }
     case 'SET_THEME':
       return { ...state, theme: action.payload }
     case 'SET_LOADING':

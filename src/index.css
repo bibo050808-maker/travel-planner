@@ -43,7 +43,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body, #root { height: 100%; width: 100%; overflow: hidden; }
+html, body, #root { height: 100%; width: 100%; overflow: hidden; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
 
 body {
   font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', 'MiSans', 'Noto Sans SC', 'Segoe UI', sans-serif;
@@ -76,3 +76,14 @@ input, button, textarea, select { font-family: inherit; font-size: inherit; }
 [data-theme="dark"] .preview { color: var(--guide-text) !important; }
 
 @media (max-width: 480px) { .navLabel { font-size: 8px !important; } .navItem { padding: 4px 6px !important; } }
+@media (max-width: 480px) {
+  .card, .statItem, .actionBtn { min-height: 44px; }
+  input, select, textarea, button { font-size: 16px !important; }
+  .page { padding: 12px !important; }
+}
+
+@media (max-width: 480px) {
+  .card, .statItem, .actionBtn { min-height: 44px; }
+  input, select, textarea, button { font-size: 16px !important; }
+  .page { padding: 12px !important; }
+}
