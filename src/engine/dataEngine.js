@@ -93,8 +93,7 @@ function getCrowdColor(level) {
 }
 
 export function generateFlowForCity(cityId, daysAhead = 14, daysBehind = 7) {
-  const city = cities.find(c => c.id === cityId)
-  if (!city) return []
+  var city = cities.find(function(c) { return c.id === cityId }) || { id: cityId, costLevel: 2, tags: [], bestMonths: [4,5,9,10], region: '其他' }; // fallback for API cities
 
   const entries = []
   const now = new Date()

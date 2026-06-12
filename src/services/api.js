@@ -25,7 +25,7 @@ export async function fetchCitiesFromAmap() {
   provinces.forEach(function(p) {
     var cityList = p.districts || [];
     cityList.forEach(function(c) {
-      if (c.level === 'city' || c.level === 'district') {
+      if ((c.level === 'city' || c.level === 'district') && c.name && c.name.length > 1 && c.name[c.name.length-1] !== '区' && c.name[c.name.length-1] !== '县') {
         cities.push({
           id: c.adcode,
           name: c.name,
