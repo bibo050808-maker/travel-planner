@@ -167,7 +167,7 @@ export default function CityDetailPage() {
       </div>
 
       <div className={styles.actions}>
-        <button className={styles.actionBtn} onClick={addToGuide}>{'\uD83D\uDCD6 \u6DFB\u52A0\u5230\u653B\u7565'}</button>
+        <button className={styles.actionBtn} onClick={function() { dispatch({ type: 'SET_CITY', payload: city }); navigate('/guide') }}>添加到攻略</button>
         <button className={`${styles.actionBtn} ${isFav ? styles.favActive : ''}`} onClick={toggleFavorite}>
           {isFav ? '❤️ 已收藏' : '🤍 收藏'}
         </button>
