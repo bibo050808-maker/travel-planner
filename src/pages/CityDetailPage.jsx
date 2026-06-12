@@ -47,6 +47,8 @@ export default function CityDetailPage() {
     await saveFavorites(newFavs)
   }
 
+  var handleAddToGuide = function() { dispatch({ type: 'SET_CITY', payload: city }); dispatch({ type: 'ADD_TRIP_CITY', payload: city }); navigate('/guide') }
+
   const goToFood = () => {
     dispatch({ type: 'SET_CITY', payload: city })
     navigate('/food')
@@ -112,8 +114,8 @@ export default function CityDetailPage() {
         <div className={styles.sectionTitle}>📊 未来两周人流趋势</div>
         <div className={styles.predBars}>
           {predFlows.map(f => {
-            const parts = f.date.split('-')
-            const shortDate = `${parseInt(parts[1])}/${parseInt(parts[2])}`
+            var parts = f.date ? f.date.split('-') : []
+            var shortDate = parts.length >= 3 ? parseInt(parts[1]) + '/' + parseInt(parts[2]) : '--'
             return (
               <div key={f.date} className={styles.predItem}>
                 <div className={styles.predBar} style={{
@@ -167,7 +169,7 @@ export default function CityDetailPage() {
       </div>
 
       <div className={styles.actions}>
-        <button className={styles.actionBtn} onClick={function() { dispatch({ type: 'SET_CITY', payload: city }); navigate('/guide') }}>添加到攻略</button>
+        <button className={styles.actionBtn} onClick={handleAddToGuide}>添加到攻略</button>
         <button className={`${styles.actionBtn} ${isFav ? styles.favActive : ''}`} onClick={toggleFavorite}>
           {isFav ? '❤️ 已收藏' : '🤍 收藏'}
         </button>

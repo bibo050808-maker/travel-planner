@@ -31,11 +31,12 @@ export default function App() {
   const navigate = useNavigate()
   const location = useLocation()
   const mainRef = useRef(null)
+  var timerRef = useRef(null)
   const [animating, setAnimating] = useState(false)
   const [showSplash, setShowSplash] = useState(true)
   const [showOnboarding, setShowOnboarding] = useState(false)
 
-  const currentTab = TABS.find(t => t.path === location.pathname)?.id || 'search'
+  const currentTab = TABS.find(function(t) { return t.path === location.pathname })?.id || (location.pathname.startsWith('/city/') ? 'search_detail' : 'search')
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', state.theme)
@@ -56,7 +57,7 @@ export default function App() {
   }, [])
 
   const switchTab = (tab) => {
-    if (tab.id === currentTab) return
+    if (tab.path === location.pathname) return
     setAnimating(true)
     setTimeout(() => setAnimating(false), 250)
     dispatch({ type: 'SET_TAB', payload: tab.id })
@@ -74,6 +75,7 @@ export default function App() {
     setShowOnboarding(false)
   }
 
+  const activeTabId = currentTab === 'search_detail' ? 'search' : currentTab
   const showApp = !showSplash && !showOnboarding
 
   return (
@@ -85,7 +87,7 @@ export default function App() {
           <aside className={styles.sidebar}>
             {TABS.map(tab => (
               <button key={tab.id}
-                className={`${styles.sideBtn} ${currentTab === tab.id ? styles.active : ''}`}
+                className={`${styles.sideBtn} ${activeTabId === tab.id ? styles.active : ''}`}
                 onClick={() => switchTab(tab)} title={tab.label}>
                 <Icon name={tab.icon} size={22} className={styles.sideIcon} />
                 <span className={styles.sideLabel}>{tab.label}</span>
@@ -110,7 +112,7 @@ export default function App() {
           <nav className={styles.bottomNav}>
             {TABS.map(tab => (
               <button key={tab.id}
-                className={`${styles.navItem} ${currentTab === tab.id ? styles.active : ''}`}
+                className={`${styles.navItem} ${activeTabId === tab.id ? styles.active : ''}`}
                 onClick={() => switchTab(tab)}>
                 <Icon name={tab.icon} size={20} className={styles.navIcon} />
                 <span className={styles.navLabel}>{tab.label}</span>

@@ -10,30 +10,30 @@ function CitySearchInput({ cities, value, onChange, placeholder, excludeId }) {
   var _o = useState(false), open = _o[0], setOpen = _o[1];
   var ref = useRef(null);
 
-  var selectedCity = cities.find(function(c) { return c.id === value; });
+  var selectedCity = cities.find((c) => { return c.id === value; });
 
-  useEffect(function() {
+  useEffect(() => {
     if (!open) return;
-    var handleClick = function(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    var handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
     document.addEventListener('mousedown', handleClick);
-    return function() { document.removeEventListener('mousedown', handleClick); };
+    return () => { document.removeEventListener('mousedown', handleClick); };
   }, [open]);
 
-  var results = useMemo(function() {
-    if (!query.trim()) return cities.filter(function(c) { return c.id !== excludeId; }).slice(0, 8);
+  var results = useMemo(() => {
+    if (!query.trim()) return cities.filter((c) => { return c.id !== excludeId; }).slice(0, 8);
     var q = query.toLowerCase();
-    return cities.filter(function(c) {
+    return cities.filter((c) => {
       return c.id !== excludeId && (c.name.includes(q) || c.province.includes(q) || c.tags.some(function(t) { return t.includes(q); }));
     }).slice(0, 8);
   }, [query, cities, excludeId]);
 
-  var handleSelect = function(city) {
+  var handleSelect = (city) => {
     onChange(city.id);
     setQuery(city.name);
     setOpen(false);
   };
 
-  var handleClear = function() {
+  var handleClear = () => {
     onChange('');
     setQuery('');
   };
@@ -44,16 +44,16 @@ function CitySearchInput({ cities, value, onChange, placeholder, excludeId }) {
       className: styles.searchInput,
       placeholder: placeholder,
       value: query,
-      onChange: function(e) { setQuery(e.target.value); setOpen(true); },
-      onFocus: function() { setOpen(true); }
+      onChange: (e) => { setQuery(e.target.value); setOpen(true); },
+      onFocus: () => { setOpen(true); }
     }),
     value && h('button', { className: styles.clearBtn2, onClick: handleClear }, '\u2715'),
     open && h('div', { className: styles.dropdown },
-      results.map(function(c) {
+      results.map((c) => {
         return h('div', {
           key: c.id,
           className: styles.dropItem + ' ' + (c.id === value ? styles.dropActive : ''),
-          onMouseDown: function() { handleSelect(c); }
+          onMouseDown: () => { handleSelect(c); }
         },
           h('span', { className: styles.dropName }, c.name),
           h('span', { className: styles.dropProvince }, c.province),
@@ -75,22 +75,22 @@ export default function RoutePage() {
   var _r = useState(null), routes = _r[0], setRoutes = _r[1];
   var _l = useState(false), loading = _l[0], setLoading = _l[1];
 
-  useEffect(function() {
+  useEffect(() => {
     getAllCities().then(setCities);
   }, []);
 
-  var swapCities = function() {
+  var swapCities = () => {
     setFromId(toId); setToId(fromId);
   };
 
-  var doSearch = function() {
+  var doSearch = () => {
     if (!fromId || !toId) return;
     setLoading(true);
-    setTimeout(function() {
+    setTimeout(() => {
       var result = searchRoutes(fromId, toId, mode);
       setRoutes(result);
-      var fc = cities.find(function(c) { return c.id === fromId; });
-      var tc = cities.find(function(c) { return c.id === toId; });
+      var fc = cities.find((c) => { return c.id === fromId; });
+      var tc = cities.find((c) => { return c.id === toId; });
       if (fc && tc) {
         dispatch({ type: 'ADD_TRIP_ROUTE', payload: { fromId: fromId, toId: toId, fromName: fc.name, toName: tc.name, mode: mode } });
       dispatch({ type: 'ADD_TRIP_CITY', payload: fc });
@@ -107,8 +107,8 @@ export default function RoutePage() {
     return h > 0 ? h + 'h' + (m > 0 ? m + 'min' : '') : m + 'min';
   };
 
-  var fromName = cities.find(function(c) { return c.id === fromId; });
-  var toName = cities.find(function(c) { return c.id === toId; });
+  var fromName = cities.find((c) => { return c.id === fromId; });
+  var toName = cities.find((c) => { return c.id === toId; });
   var fromLabel = fromName ? fromName.name : '\u9009\u62E9';
   var toLabel = toName ? toName.name : '\u9009\u62E9';
 
@@ -128,8 +128,8 @@ export default function RoutePage() {
     ),
 
     h('div', { className: styles.modeSwitch },
-      h('button', { className: styles.modeBtn + ' ' + (mode === 'comfort' ? styles.modeActive : ''), onClick: function() { setMode('comfort'); } }, '\uD83D\uDECB\uFE0F \u8212\u9002\u6A21\u5F0F'),
-      h('button', { className: styles.modeBtn + ' ' + (mode === 'budget' ? styles.modeActive : ''), onClick: function() { setMode('budget'); } }, '\uD83D\uDCB0 \u7701\u94B1\u6A21\u5F0F')
+      h('button', { className: styles.modeBtn + ' ' + (mode === 'comfort' ? styles.modeActive : ''), onClick: () => { setMode('comfort'); } }, '\uD83D\uDECB\uFE0F \u8212\u9002\u6A21\u5F0F'),
+      h('button', { className: styles.modeBtn + ' ' + (mode === 'budget' ? styles.modeActive : ''), onClick: () => { setMode('budget'); } }, '\uD83D\uDCB0 \u7701\u94B1\u6A21\u5F0F')
     ),
 
     h('button', { className: styles.searchBtn, onClick: doSearch, disabled: !fromId || !toId }, '\uD83D\uDD0D \u67E5\u8BE2\u8DEF\u7EBF'),
