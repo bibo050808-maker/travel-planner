@@ -46,7 +46,7 @@ export default function App() {
    async function boot() {
       dispatch({ type: 'SET_LOADING', payload: true })
       await initStorage()
-      await refreshData()
+      try { await refreshData() } catch(e) {}
       const favs = await loadFavorites()
       if (favs) dispatch({ type: 'SET_FAVORITES', payload: favs })
       dispatch({ type: 'SET_LOADING', payload: false })

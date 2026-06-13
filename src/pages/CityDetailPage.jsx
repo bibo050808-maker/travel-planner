@@ -49,6 +49,8 @@ export default function CityDetailPage() {
 
   var handleAddToGuide = function() { dispatch({ type: 'SET_CITY', payload: city }); dispatch({ type: 'ADD_TRIP_CITY', payload: city }); navigate('/guide') }
 
+  var handleAddToGuide = function() { dispatch({ type: 'SET_CITY', payload: city }); dispatch({ type: 'ADD_TRIP_CITY', payload: city }); navigate('/guide') };
+
   const goToFood = () => {
     dispatch({ type: 'SET_CITY', payload: city })
     navigate('/food')
