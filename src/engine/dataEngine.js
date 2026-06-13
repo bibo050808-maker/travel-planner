@@ -1,8 +1,7 @@
 import { saveCities, getAllCities, getFlowForCity, saveFlowEntries } from '../utils/storage'
 import { fetchCities } from '../services/api'
 import cities from './cities'
-
-const AMAP_KEY = (function() { try { return localStorage.getItem('amap_key') || ''; } catch(e) { return ''; } })();
+import weatherData from "./weatherData.json";
 
 function fetchGaodeWeather(cityName) {
   if (!AMAP_KEY || !cityName) return null;
@@ -181,9 +180,7 @@ export async function refreshData() {
   const existing = await getAllCities();
   if (existing.length === 0) { await saveCities(cities); }
   var allFlow = [];
-  var wMap = {};
-  var wPromises = cities.slice(0,30).map(function(cx) { return fetchGaodeWeather(cx.name).then(function(w) { wMap[cx.id] = w; }); });
-  await Promise.all(wPromises);
+  var wMap = {}; try { cities.forEach(function(cx){if(weatherData[cx.name])wMap[cx.id]=weatherData[cx.name]}); console.log("Weather loaded for "+Object.keys(wMap).length+" cities"); } catch(e){}
   for (var ci = 0; ci < cities.length; ci++) {
     var flow = generateFlowForCity(cities[ci].id, 14, 7, wMap[cities[ci].id] || null);
     for (var cj = 0; cj < flow.length; cj++) { allFlow.push(flow[cj]); }
