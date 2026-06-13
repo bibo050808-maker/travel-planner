@@ -1,0 +1,816 @@
+{
+  "hangzhou": {
+    "2026-06-13": {
+      "weather": "中雨",
+      "tempMax": 25,
+      "tempMin": 20
+    },
+    "2026-06-14": {
+      "weather": "小雨",
+      "tempMax": 27,
+      "tempMin": 22
+    },
+    "2026-06-15": {
+      "weather": "多云",
+      "tempMax": 28,
+      "tempMin": 22
+    },
+    "2026-06-16": {
+      "weather": "小雨",
+      "tempMax": 29,
+      "tempMin": 22
+    }
+  },
+  "shanghai": {
+    "2026-06-13": {
+      "weather": "阴",
+      "tempMax": 27,
+      "tempMin": 21
+    },
+    "2026-06-14": {
+      "weather": "小雨",
+      "tempMax": 24,
+      "tempMin": 21
+    },
+    "2026-06-15": {
+      "weather": "小雨",
+      "tempMax": 27,
+      "tempMin": 22
+    },
+    "2026-06-16": {
+      "weather": "小雨",
+      "tempMax": 28,
+      "tempMin": 23
+    }
+  },
+  "beijing": {
+    "2026-06-13": {
+      "weather": "雷阵雨",
+      "tempMax": 27,
+      "tempMin": 18
+    },
+    "2026-06-14": {
+      "weather": "多云",
+      "tempMax": 29,
+      "tempMin": 21
+    },
+    "2026-06-15": {
+      "weather": "多云",
+      "tempMax": 31,
+      "tempMin": 21
+    },
+    "2026-06-16": {
+      "weather": "雷阵雨",
+      "tempMax": 28,
+      "tempMin": 20
+    }
+  },
+  "chengdu": {
+    "2026-06-13": {
+      "weather": "晴",
+      "tempMax": 31,
+      "tempMin": 20
+    },
+    "2026-06-14": {
+      "weather": "多云",
+      "tempMax": 32,
+      "tempMin": 22
+    },
+    "2026-06-15": {
+      "weather": "多云",
+      "tempMax": 30,
+      "tempMin": 23
+    },
+    "2026-06-16": {
+      "weather": "阴",
+      "tempMax": 32,
+      "tempMin": 21
+    }
+  },
+  "xiamen": {
+    "2026-06-13": {
+      "weather": "阴",
+      "tempMax": 29,
+      "tempMin": 24
+    },
+    "2026-06-14": {
+      "weather": "暴雨",
+      "tempMax": 27,
+      "tempMin": 24
+    },
+    "2026-06-15": {
+      "weather": "暴雨",
+      "tempMax": 27,
+      "tempMin": 25
+    },
+    "2026-06-16": {
+      "weather": "中雨",
+      "tempMax": 28,
+      "tempMin": 25
+    }
+  },
+  "sanya": {
+    "2026-06-13": {
+      "weather": "多云",
+      "tempMax": 33,
+      "tempMin": 28
+    },
+    "2026-06-14": {
+      "weather": "雷阵雨",
+      "tempMax": 33,
+      "tempMin": 27
+    },
+    "2026-06-15": {
+      "weather": "多云",
+      "tempMax": 34,
+      "tempMin": 27
+    },
+    "2026-06-16": {
+      "weather": "雷阵雨",
+      "tempMax": 34,
+      "tempMin": 27
+    }
+  },
+  "kunming": {
+    "2026-06-13": {
+      "weather": "小雨",
+      "tempMax": 24,
+      "tempMin": 17
+    },
+    "2026-06-14": {
+      "weather": "中雨",
+      "tempMax": 23,
+      "tempMin": 17
+    },
+    "2026-06-15": {
+      "weather": "中雨",
+      "tempMax": 22,
+      "tempMin": 17
+    },
+    "2026-06-16": {
+      "weather": "小雨",
+      "tempMax": 22,
+      "tempMin": 17
+    }
+  },
+  "guilin": {
+    "2026-06-13": {
+      "weather": "大雨",
+      "tempMax": 28,
+      "tempMin": 22
+    },
+    "2026-06-14": {
+      "weather": "小雨",
+      "tempMax": 30,
+      "tempMin": 22
+    },
+    "2026-06-15": {
+      "weather": "小雨",
+      "tempMax": 31,
+      "tempMin": 23
+    },
+    "2026-06-16": {
+      "weather": "中雨",
+      "tempMax": 31,
+      "tempMin": 24
+    }
+  },
+  "nanjing": {
+    "2026-06-13": {
+      "weather": "阴",
+      "tempMax": 30,
+      "tempMin": 21
+    },
+    "2026-06-14": {
+      "weather": "阴",
+      "tempMax": 29,
+      "tempMin": 20
+    },
+    "2026-06-15": {
+      "weather": "多云",
+      "tempMax": 30,
+      "tempMin": 20
+    },
+    "2026-06-16": {
+      "weather": "多云",
+      "tempMax": 32,
+      "tempMin": 22
+    }
+  },
+  "dalian": {
+    "2026-06-13": {
+      "weather": "小雨",
+      "tempMax": 24,
+      "tempMin": 18
+    },
+    "2026-06-14": {
+      "weather": "多云",
+      "tempMax": 26,
+      "tempMin": 19
+    },
+    "2026-06-15": {
+      "weather": "多云",
+      "tempMax": 25,
+      "tempMin": 19
+    },
+    "2026-06-16": {
+      "weather": "多云",
+      "tempMax": 26,
+      "tempMin": 19
+    }
+  },
+  "haerbin": {
+    "2026-06-13": {
+      "weather": "多云",
+      "tempMax": 25,
+      "tempMin": 14
+    },
+    "2026-06-14": {
+      "weather": "中雨",
+      "tempMax": 22,
+      "tempMin": 15
+    },
+    "2026-06-15": {
+      "weather": "中雨",
+      "tempMax": 23,
+      "tempMin": 17
+    },
+    "2026-06-16": {
+      "weather": "小雨",
+      "tempMax": 25,
+      "tempMin": 17
+    }
+  },
+  "qingdao": {
+    "2026-06-13": {
+      "weather": "多云",
+      "tempMax": 26,
+      "tempMin": 21
+    },
+    "2026-06-14": {
+      "weather": "小雨",
+      "tempMax": 24,
+      "tempMin": 20
+    },
+    "2026-06-15": {
+      "weather": "晴",
+      "tempMax": 24,
+      "tempMin": 20
+    },
+    "2026-06-16": {
+      "weather": "多云",
+      "tempMax": 25,
+      "tempMin": 21
+    }
+  },
+  "suzhou": {
+    "2026-06-13": {
+      "weather": "多云",
+      "tempMax": 27,
+      "tempMin": 22
+    },
+    "2026-06-14": {
+      "weather": "多云",
+      "tempMax": 26,
+      "tempMin": 22
+    },
+    "2026-06-15": {
+      "weather": "晴",
+      "tempMax": 30,
+      "tempMin": 21
+    },
+    "2026-06-16": {
+      "weather": "阴",
+      "tempMax": 29,
+      "tempMin": 23
+    }
+  },
+  "jinan": {
+    "2026-06-13": {
+      "weather": "雷阵雨",
+      "tempMax": 33,
+      "tempMin": 21
+    },
+    "2026-06-14": {
+      "weather": "雷阵雨",
+      "tempMax": 31,
+      "tempMin": 22
+    },
+    "2026-06-15": {
+      "weather": "多云",
+      "tempMax": 32,
+      "tempMin": 22
+    },
+    "2026-06-16": {
+      "weather": "晴",
+      "tempMax": 33,
+      "tempMin": 23
+    }
+  },
+  "shenyang": {
+    "2026-06-13": {
+      "weather": "雷阵雨",
+      "tempMax": 26,
+      "tempMin": 18
+    },
+    "2026-06-14": {
+      "weather": "中雨",
+      "tempMax": 28,
+      "tempMin": 18
+    },
+    "2026-06-15": {
+      "weather": "雷阵雨",
+      "tempMax": 24,
+      "tempMin": 18
+    },
+    "2026-06-16": {
+      "weather": "雷阵雨",
+      "tempMax": 23,
+      "tempMin": 18
+    }
+  },
+  "zhenzhou": {
+    "2026-06-13": {
+      "weather": "晴",
+      "tempMax": 34,
+      "tempMin": 23
+    },
+    "2026-06-14": {
+      "weather": "阴",
+      "tempMax": 37,
+      "tempMin": 25
+    },
+    "2026-06-15": {
+      "weather": "多云",
+      "tempMax": 36,
+      "tempMin": 25
+    },
+    "2026-06-16": {
+      "weather": "多云",
+      "tempMax": 35,
+      "tempMin": 25
+    }
+  },
+  "wuxi": {
+    "2026-06-13": {
+      "weather": "阴",
+      "tempMax": 29,
+      "tempMin": 22
+    },
+    "2026-06-14": {
+      "weather": "小雨",
+      "tempMax": 26,
+      "tempMin": 21
+    },
+    "2026-06-15": {
+      "weather": "晴",
+      "tempMax": 29,
+      "tempMin": 20
+    },
+    "2026-06-16": {
+      "weather": "小雨",
+      "tempMax": 30,
+      "tempMin": 23
+    }
+  },
+  "tianjin": {
+    "2026-06-13": {
+      "weather": "雷阵雨",
+      "tempMax": 28,
+      "tempMin": 19
+    },
+    "2026-06-14": {
+      "weather": "多云",
+      "tempMax": 29,
+      "tempMin": 21
+    },
+    "2026-06-15": {
+      "weather": "阴",
+      "tempMax": 31,
+      "tempMin": 23
+    },
+    "2026-06-16": {
+      "weather": "阴",
+      "tempMax": 31,
+      "tempMin": 22
+    }
+  },
+  "taiyuan": {
+    "2026-06-13": {
+      "weather": "多云",
+      "tempMax": 29,
+      "tempMin": 14
+    },
+    "2026-06-14": {
+      "weather": "多云",
+      "tempMax": 33,
+      "tempMin": 17
+    },
+    "2026-06-15": {
+      "weather": "小雨",
+      "tempMax": 34,
+      "tempMin": 18
+    },
+    "2026-06-16": {
+      "weather": "小雨",
+      "tempMax": 33,
+      "tempMin": 17
+    }
+  },
+  "shijiazhuang": {
+    "2026-06-13": {
+      "weather": "雷阵雨",
+      "tempMax": 33,
+      "tempMin": 20
+    },
+    "2026-06-14": {
+      "weather": "多云",
+      "tempMax": 33,
+      "tempMin": 22
+    },
+    "2026-06-15": {
+      "weather": "阴",
+      "tempMax": 34,
+      "tempMin": 22
+    },
+    "2026-06-16": {
+      "weather": "雷阵雨",
+      "tempMax": 36,
+      "tempMin": 22
+    }
+  },
+  "hefei": {
+    "2026-06-13": {
+      "weather": "多云",
+      "tempMax": 27,
+      "tempMin": 19
+    },
+    "2026-06-14": {
+      "weather": "多云",
+      "tempMax": 31,
+      "tempMin": 20
+    },
+    "2026-06-15": {
+      "weather": "多云",
+      "tempMax": 31,
+      "tempMin": 22
+    },
+    "2026-06-16": {
+      "weather": "多云",
+      "tempMax": 30,
+      "tempMin": 22
+    }
+  },
+  "nanchang": {
+    "2026-06-13": {
+      "weather": "大雨",
+      "tempMax": 22,
+      "tempMin": 20
+    },
+    "2026-06-14": {
+      "weather": "阴",
+      "tempMax": 28,
+      "tempMin": 21
+    },
+    "2026-06-15": {
+      "weather": "多云",
+      "tempMax": 30,
+      "tempMin": 22
+    },
+    "2026-06-16": {
+      "weather": "小雨",
+      "tempMax": 31,
+      "tempMin": 24
+    }
+  },
+  "lanzhou": {
+    "2026-06-13": {
+      "weather": "晴",
+      "tempMax": 34,
+      "tempMin": 17
+    },
+    "2026-06-14": {
+      "weather": "多云",
+      "tempMax": 30,
+      "tempMin": 14
+    },
+    "2026-06-15": {
+      "weather": "晴",
+      "tempMax": 33,
+      "tempMin": 16
+    },
+    "2026-06-16": {
+      "weather": "晴",
+      "tempMax": 34,
+      "tempMin": 17
+    }
+  },
+  "changchun": {
+    "2026-06-13": {
+      "weather": "小雨",
+      "tempMax": 25,
+      "tempMin": 17
+    },
+    "2026-06-14": {
+      "weather": "雷阵雨",
+      "tempMax": 27,
+      "tempMin": 18
+    },
+    "2026-06-15": {
+      "weather": "中雨",
+      "tempMax": 22,
+      "tempMin": 18
+    },
+    "2026-06-16": {
+      "weather": "雷阵雨",
+      "tempMax": 22,
+      "tempMin": 18
+    }
+  },
+  "xining": {
+    "2026-06-13": {
+      "weather": "多云",
+      "tempMax": 26,
+      "tempMin": 14
+    },
+    "2026-06-14": {
+      "weather": "阴",
+      "tempMax": 23,
+      "tempMin": 9
+    },
+    "2026-06-15": {
+      "weather": "多云",
+      "tempMax": 28,
+      "tempMin": 12
+    },
+    "2026-06-16": {
+      "weather": "阴",
+      "tempMax": 27,
+      "tempMin": 12
+    }
+  },
+  "yinchuan": {
+    "2026-06-13": {
+      "weather": "晴",
+      "tempMax": 32,
+      "tempMin": 19
+    },
+    "2026-06-14": {
+      "weather": "多云",
+      "tempMax": 34,
+      "tempMin": 21
+    },
+    "2026-06-15": {
+      "weather": "多云",
+      "tempMax": 34,
+      "tempMin": 17
+    },
+    "2026-06-16": {
+      "weather": "多云",
+      "tempMax": 34,
+      "tempMin": 18
+    }
+  },
+  "wulumuqi": {
+    "2026-06-13": {
+      "weather": "多云",
+      "tempMax": 28,
+      "tempMin": 21
+    },
+    "2026-06-14": {
+      "weather": "多云",
+      "tempMax": 32,
+      "tempMin": 22
+    },
+    "2026-06-15": {
+      "weather": "晴",
+      "tempMax": 33,
+      "tempMin": 23
+    },
+    "2026-06-16": {
+      "weather": "晴",
+      "tempMax": 34,
+      "tempMin": 22
+    }
+  },
+  "beihai": {
+    "2026-06-13": {
+      "weather": "雷阵雨",
+      "tempMax": 32,
+      "tempMin": 25
+    },
+    "2026-06-14": {
+      "weather": "中雨",
+      "tempMax": 30,
+      "tempMin": 25
+    },
+    "2026-06-15": {
+      "weather": "暴雨",
+      "tempMax": 28,
+      "tempMin": 24
+    },
+    "2026-06-16": {
+      "weather": "暴雨",
+      "tempMax": 27,
+      "tempMin": 24
+    }
+  },
+  "dunhuang": {
+    "2026-06-13": {
+      "weather": "多云",
+      "tempMax": 36,
+      "tempMin": 20
+    },
+    "2026-06-14": {
+      "weather": "多云",
+      "tempMax": 36,
+      "tempMin": 19
+    },
+    "2026-06-15": {
+      "weather": "阴",
+      "tempMax": 36,
+      "tempMin": 19
+    },
+    "2026-06-16": {
+      "weather": "多云",
+      "tempMax": 36,
+      "tempMin": 21
+    }
+  },
+  "yantai": {
+    "2026-06-13": {
+      "weather": "小雨",
+      "tempMax": 29,
+      "tempMin": 21
+    },
+    "2026-06-14": {
+      "weather": "多云",
+      "tempMax": 30,
+      "tempMin": 20
+    },
+    "2026-06-15": {
+      "weather": "多云",
+      "tempMax": 27,
+      "tempMin": 19
+    },
+    "2026-06-16": {
+      "weather": "多云",
+      "tempMax": 27,
+      "tempMin": 19
+    }
+  },
+  "jiuzhaigou": {
+    "2026-06-13": {
+      "weather": "晴",
+      "tempMax": 31,
+      "tempMin": 14
+    },
+    "2026-06-14": {
+      "weather": "阵雨",
+      "tempMax": 28,
+      "tempMin": 14
+    },
+    "2026-06-15": {
+      "weather": "阵雨",
+      "tempMax": 28,
+      "tempMin": 15
+    },
+    "2026-06-16": {
+      "weather": "阵雨",
+      "tempMax": 29,
+      "tempMin": 16
+    }
+  },
+  "yichang": {
+    "2026-06-13": {
+      "weather": "多云",
+      "tempMax": 29,
+      "tempMin": 19
+    },
+    "2026-06-14": {
+      "weather": "晴",
+      "tempMax": 32,
+      "tempMin": 23
+    },
+    "2026-06-15": {
+      "weather": "多云",
+      "tempMax": 34,
+      "tempMin": 22
+    },
+    "2026-06-16": {
+      "weather": "小雨",
+      "tempMax": 32,
+      "tempMin": 23
+    }
+  },
+  "linzhi": {
+    "2026-06-13": {
+      "weather": "小雨",
+      "tempMax": 22,
+      "tempMin": 12
+    },
+    "2026-06-14": {
+      "weather": "阴",
+      "tempMax": 24,
+      "tempMin": 12
+    },
+    "2026-06-15": {
+      "weather": "小雨",
+      "tempMax": 23,
+      "tempMin": 12
+    },
+    "2026-06-16": {
+      "weather": "小雨",
+      "tempMax": 23,
+      "tempMin": 12
+    }
+  },
+  "mohe": {
+    "2026-06-13": {
+      "weather": "多云",
+      "tempMax": 20,
+      "tempMin": 1
+    },
+    "2026-06-14": {
+      "weather": "多云",
+      "tempMax": 24,
+      "tempMin": 4
+    },
+    "2026-06-15": {
+      "weather": "晴",
+      "tempMax": 25,
+      "tempMin": 9
+    },
+    "2026-06-16": {
+      "weather": "小雨",
+      "tempMax": 21,
+      "tempMin": 7
+    }
+  },
+  "xuzhou": {
+    "2026-06-13": {
+      "weather": "多云",
+      "tempMax": 32,
+      "tempMin": 19
+    },
+    "2026-06-14": {
+      "weather": "阴",
+      "tempMax": 31,
+      "tempMin": 20
+    },
+    "2026-06-15": {
+      "weather": "多云",
+      "tempMax": 30,
+      "tempMin": 19
+    },
+    "2026-06-16": {
+      "weather": "晴",
+      "tempMax": 32,
+      "tempMin": 21
+    }
+  },
+  "chengde": {
+    "2026-06-13": {
+      "weather": "中雨",
+      "tempMax": 24,
+      "tempMin": 15
+    },
+    "2026-06-14": {
+      "weather": "雷阵雨",
+      "tempMax": 26,
+      "tempMin": 18
+    },
+    "2026-06-15": {
+      "weather": "雷阵雨",
+      "tempMax": 27,
+      "tempMin": 19
+    },
+    "2026-06-16": {
+      "weather": "中雨",
+      "tempMax": 27,
+      "tempMin": 17
+    }
+  },
+  "jiujiang": {
+    "2026-06-13": {
+      "weather": "中雨",
+      "tempMax": 22,
+      "tempMin": 18
+    },
+    "2026-06-14": {
+      "weather": "多云",
+      "tempMax": 28,
+      "tempMin": 21
+    },
+    "2026-06-15": {
+      "weather": "晴",
+      "tempMax": 30,
+      "tempMin": 21
+    },
+    "2026-06-16": {
+      "weather": "多云",
+      "tempMax": 31,
+      "tempMin": 22
+    }
+  }
+}
