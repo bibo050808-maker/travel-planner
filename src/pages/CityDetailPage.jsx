@@ -20,17 +20,18 @@ export default function CityDetailPage() {
   useEffect(() => {
     async function load() {
       setLoading(true)
-      const c = await getCityById(cityId)
-      setCity(c)
-      loadReviews()
-      if (c) {
-        const f = await getFlowForCity(cityId)
-        setFlows(f)
-      }
-      setLoading(false)
+      try {
+        const c = await getCityById(cityId)
+        setCity(c)
+        if (cityId) { const r = await getReviewsForCity(cityId); setReviews(r); }
+        if (c) { const f = await getFlowForCity(cityId); setFlows(f); }
+      } catch (error) { console.error(error); }
+      finally { setLoading(false); }
     }
-    load()
-  }, [cityId])
+    if (!state.isLoading) {
+      load()
+    }
+  }, [cityId, state.isLoading])
 
   const loadReviews = async () => {
     if (cityId) {
