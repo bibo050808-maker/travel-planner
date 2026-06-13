@@ -20,17 +20,15 @@ export default function CityDetailPage() {
   useEffect(() => {
     async function load() {
       setLoading(true)
-      const c = await getCityById(cityId)
-      setCity(c)
-      loadReviews()
-      if (c) {
-        const f = await getFlowForCity(cityId)
-        setFlows(f)
-      }
-      setLoading(false)
+      try {
+        const x = await getCityById(cityId); setCity(x)
+        if (cityId) { const r = await getReviewsForCity(cityId); setReviews(r); }
+        if (x) { const f = await getFlowForCity(cityId); setFlows(f); }
+      } catch (error) { console.error(error); }
+      finally { setLoading(false); }
     }
-    load()
-  }, [cityId])
+    if (!state.isLoading) { load() }
+  }, [cityId, state.isLoading])
 
   const loadReviews = async () => {
     if (cityId) {
@@ -46,6 +44,8 @@ export default function CityDetailPage() {
     dispatch({ type: 'SET_FAVORITES', payload: newFavs })
     await saveFavorites(newFavs)
   }
+
+  const handleAddToGuide = () => { dispatch({ type: 'SET_CITY', payload: city }); dispatch({ type: 'ADD_TRIP_CITY', payload: city }); navigate('/guide') };
 
   const goToFood = () => {
     dispatch({ type: 'SET_CITY', payload: city })
@@ -167,7 +167,7 @@ export default function CityDetailPage() {
       </div>
 
       <div className={styles.actions}>
-        <button className={styles.actionBtn} onClick={addToGuide}>{'\uD83D\uDCD6 \u6DFB\u52A0\u5230\u653B\u7565'}</button>
+        <button className={styles.actionBtn} onClick={handleAddToGuide}>添加到攻略</button>
         <button className={`${styles.actionBtn} ${isFav ? styles.favActive : ''}`} onClick={toggleFavorite}>
           {isFav ? '❤️ 已收藏' : '🤍 收藏'}
         </button>

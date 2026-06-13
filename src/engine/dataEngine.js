@@ -2,6 +2,29 @@ import { saveCities, getAllCities, getFlowForCity, saveFlowEntries } from '../ut
 import { fetchCities } from '../services/api'
 import cities from './cities'
 
+const AMAP_KEY = (function() { try { return localStorage.getItem('amap_key') || ''; } catch(e) { return ''; } })();
+
+function fetchGaodeWeather(cityName) {
+  if (!AMAP_KEY || !cityName) return null;
+  var url = 'https://restapi.amap.com/v3/weather/weatherInfo?key=' + AMAP_KEY + '&city=' + encodeURIComponent(cityName) + '&extensions=all';
+  return fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined })
+    .then(function(r) { if (!r.ok) return null; return r.json(); })
+    .then(function(data) {
+      if (!data || data.status !== '1' || !data.forecasts || !data.forecasts[0]) return null;
+      var casts = data.forecasts[0].casts || [];
+      var result = {};
+      for (var i = 0; i < casts.length; i++) {
+        result[casts[i].date] = {
+          weather: casts[i].dayweather || '',
+          tempMax: parseInt(casts[i].daytemp) || 0,
+          tempMin: parseInt(casts[i].nighttemp) || 0
+        };
+      }
+      return result;
+    })
+    .catch(function() { return null; });
+}
+
 const CHINESE_HOLIDAYS_2026 = {
   '2026-01-01': '元旦', '2026-01-02': '元旦', '2026-02-18': '春节',
   '2026-02-19': '春节', '2026-02-20': '春节', '2026-02-21': '春节',
@@ -39,7 +62,7 @@ function getWeatherForMonth(month) {
   return weathers[month] || '晴 15~25°C'
 }
 
-function getEstimatedTouristCount(city, dateStr, isWeekend, isHoliday, season) {
+function getEstimatedTouristCount(city, dateStr, isWeekend, isHoliday, season, weatherToday) {
   let base = 5000 + (city.costLevel * 1000) + Math.random() * 4000
 
   // Season factor
@@ -111,7 +134,7 @@ export function generateFlowForCity(cityId, daysAhead = 14, daysBehind = 7) {
     const month = date.getMonth() + 1
     const season = getSeason(month)
 
-    const touristCount = getEstimatedTouristCount(city, dateStr, isWeekend, isHoliday, season)
+    const touristCount = getEstimatedTouristCount(city, dateStr, isWeekend, isHoliday, season, weatherForecast && weatherForecast[dateStr] ? weatherForecast[dateStr].weather : null)
     const crowdLevel = getCrowdLevel(touristCount)
     const isPrediction = i >= daysBehind
 
@@ -124,7 +147,7 @@ export function generateFlowForCity(cityId, daysAhead = 14, daysBehind = 7) {
       isWeekend,
       isHoliday,
       season,
-      weather: getWeatherForMonth(month),
+      weather: (weatherForecast && weatherForecast[dateStr]) ? (weatherForecast[dateStr].weather + ' ' + weatherForecast[dateStr].tempMax + '°C') : getWeatherForMonth(month),
       isPrediction,
       crowdLabel: getCrowdLabel(crowdLevel),
       crowdColor: getCrowdColor(crowdLevel),
@@ -136,29 +159,36 @@ export function generateFlowForCity(cityId, daysAhead = 14, daysBehind = 7) {
 }
 
 export async function refreshData() {
-  // Try API-first data loading
+  // Try BFF API first (Vercel serverless)
+  try {
+    var apiUrl = window.location.origin + "/api/refresh";
+    var r = await fetch(apiUrl, { signal: AbortSignal.timeout ? AbortSignal.timeout(15000) : undefined });
+    if (r.ok) {
+      var data = await r.json();
+      if (data.ok && data.entries && data.entries.length > 0) {
+        await saveFlowEntries(data.entries);
+        console.log("BFF API refreshed: " + data.totalEntries + " entries, " + data.citiesWithWeather + " cities");
+        return;
+      }
+    }
+  } catch(e) { console.log("BFF API unavailable, local fallback"); }
+
+  // Local fallback
   try {
     var apiCities = await fetchCities();
-    if (apiCities && apiCities.length > 0) {
-      await saveCities(apiCities);
-      return;
-    }
+    if (apiCities && apiCities.length > 0) { await saveCities(apiCities); }
   } catch(e) {}
-  // Fallback to bundled data
-  const existing = await getAllCities()
-  if (existing.length === 0) {
-    await saveCities(cities)
-  } else {
-    // Merge new cities into existing DB
-    const existingIds = new Set(existing.map(c => c.id))
-    const newCities = cities.filter(c => !existingIds.has(c.id))
-    if (newCities.length > 0) await saveCities(newCities)
+  const existing = await getAllCities();
+  if (existing.length === 0) { await saveCities(cities); }
+  var allFlow = [];
+  var wMap = {};
+  var wPromises = cities.slice(0,30).map(function(cx) { return fetchGaodeWeather(cx.name).then(function(w) { wMap[cx.id] = w; }); });
+  await Promise.all(wPromises);
+  for (var ci = 0; ci < cities.length; ci++) {
+    var flow = generateFlowForCity(cities[ci].id, 14, 7, wMap[cities[ci].id] || null);
+    for (var cj = 0; cj < flow.length; cj++) { allFlow.push(flow[cj]); }
   }
-
-  for (const city of cities) {
-    const flow = generateFlowForCity(city.id)
-    await saveFlowEntries(flow)
-  }
+  if (allFlow.length > 0) { await saveFlowEntries(allFlow); }
 }
 
 export function getCrowdStatsForCity(flowData) {
