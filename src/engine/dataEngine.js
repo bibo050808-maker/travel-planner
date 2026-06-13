@@ -154,10 +154,12 @@ export async function refreshData() {
     if (newCities.length > 0) await saveCities(newCities)
   }
 
-  for (const city of cities) {
-    const flow = generateFlowForCity(city.id)
-    await saveFlowEntries(flow)
+  var allFlowEntries = []
+  for (var ci = 0; ci < cities.length; ci++) {
+    var flow = generateFlowForCity(cities[ci].id)
+    for (var cj = 0; cj < flow.length; cj++) { allFlowEntries.push(flow[cj]) }
   }
+  if (allFlowEntries.length > 0) { await saveFlowEntries(allFlowEntries) }
 }
 
 export function getCrowdStatsForCity(flowData) {

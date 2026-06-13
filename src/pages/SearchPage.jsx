@@ -256,7 +256,7 @@ async function loadData() {
       ) : (
         <div className={styles.cityList}>
           {filtered.map(city => (
-            <CityCard key={city.id} city={city} flow={getCityFlow(city.id)} />
+            <CityCard key={city.id} city={city} flow={getCityFlow(city.id) || { crowdLabel: 'ℹ️ 人流适中', crowdLevel: 2 }} />
           ))}
         </div>
       )}

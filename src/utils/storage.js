@@ -1,7 +1,7 @@
 ﻿import { openDB } from 'idb'
 
 const DB_NAME = 'travel-planner'
-const DB_VERSION = 4
+const DB_VERSION = 5
 
 let db = null
 
