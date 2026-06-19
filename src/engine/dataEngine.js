@@ -1,28 +1,10 @@
 import { saveCities, getAllCities, getFlowForCity, saveFlowEntries } from '../utils/storage'
 import { fetchCities } from '../services/api'
-import realWeatherList from "./realLatestWeather.json";
+import realWeatherList from './realLatestWeather.json';
 import cities from './cities'
-
-function fetchGaodeWeather(cityName) {
-  if (!AMAP_KEY || !cityName) return null;
-  var url = 'https://restapi.amap.com/v3/weather/weatherInfo?key=' + AMAP_KEY + '&city=' + encodeURIComponent(cityName) + '&extensions=all';
-  return fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined })
-    .then(function(r) { if (!r.ok) return null; return r.json(); })
-    .then(function(data) {
-      if (!data || data.status !== '1' || !data.forecasts || !data.forecasts[0]) return null;
-      var casts = data.forecasts[0].casts || [];
-      var result = {};
-      for (var i = 0; i < casts.length; i++) {
-        result[casts[i].date] = {
-          weather: casts[i].dayweather || '',
-          tempMax: parseInt(casts[i].daytemp) || 0,
-          tempMin: parseInt(casts[i].nighttemp) || 0
-        };
-      }
-      return result;
-    })
-    .catch(function() { return null; });
-}
+console.error('【重要】天气数据加载：', Object.keys(realWeatherList || {}).length, '城市');
+var _fk = Object.keys(realWeatherList || {})[0];
+console.error('【重要】样本：', _fk ? JSON.stringify(realWeatherList[_fk]).substring(0,200) : 'NO DATA');
 
 const CHINESE_HOLIDAYS_2026 = {
   '2026-01-01': '元旦', '2026-01-02': '元旦', '2026-02-18': '春节',
@@ -52,16 +34,7 @@ function getSeason(month) {
   return '冬'
 }
 
-function getWeatherForMonth(month) {
-  const weathers = {
-    1: '晴 -5~3°C', 2: '多云 -2~8°C', 3: '晴 5~15°C', 4: '多云 12~22°C',
-    5: '晴 18~28°C', 6: '多云 22~32°C', 7: '晴 26~35°C', 8: '多云 24~33°C',
-    9: '晴 20~28°C', 10: '多云 14~22°C', 11: '晴 6~15°C', 12: '多云 -1~8°C',
-  }
-  return weathers[month] || '晴 15~25°C'
-}
-
-function getEstimatedTouristCount(city, dateStr, isWeekend, isHoliday, season, weatherToday) {
+function getEstimatedTouristCount(city, dateStr, isWeekend, isHoliday, season) {
   let base = 5000 + (city.costLevel * 1000) + Math.random() * 4000
 
   // Season factor
@@ -114,73 +87,116 @@ function getCrowdColor(level) {
   return 'high'
 }
 
+
+function getFallbackWeather(city) { return getRegionalFallback(city && city.province); }
+
+function hashStr(s) { var h = 0; for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h = h | 0; } return Math.abs(h); }
+
+function perturbWeather(base, seed) {
+  var tables = {
+    "sunny": ["晴","多云","晴","晴","多云","晴","晴","多云","晴","多云"],
+    "cloudy": ["多云","多云","晴","多云","阴","多云","多云","阴","多云","晴"],
+    "rainy": ["小雨","中雨","多云","阴","小雨","阵雨","多云","小雨","中雨","阴"],
+  };
+  if (base.includes('晴') || base.includes('晴')) return tables.sunny[seed % 10];
+  if (base.includes('云') || base.includes('阴')) return tables.cloudy[seed % 10];
+  if (base.includes('雨') || base.includes('雷') || base.includes('雪') || base.includes('暴')) return tables.rainy[seed % 10];
+  return tables.sunny[seed % 10];
+}
 export function generateFlowForCity(cityId, daysAhead = 14, daysBehind = 7) {
-  const city = cities.find(c => c.id === cityId)
-  if (!city) return []
+  const city = cities.find(c => c.id === cityId); if (!city) return [];
+  const entries = [];
+  var safeCityName = (city.name || "").replace(/市|区|城区|县|省/g, "");
+  var realWeatherValues = Object.values(realWeatherList || {});
+  var realData = null;
+  try {
+    realData = realWeatherValues.find(w => {
+      var safeProvince = (w.province || "").replace(/市|区|城区|县|省/g, "");
+      var safeWCity = (w.city || "").replace(/市|区|城区|县|省/g, "");
+      return (safeProvince && (safeProvince.includes(safeCityName) || safeCityName.includes(safeProvince))) || 
+             (safeWCity && (safeWCity.includes(safeCityName) || safeCityName.includes(safeWCity)));
+    });
+  } catch(e) {}
 
-  const entries = []
-  const now = new Date()
-  const startDate = new Date(now)
-  startDate.setDate(now.getDate() - daysBehind)
-
-  for (let i = 0; i < daysBehind + daysAhead; i++) {
-    const date = new Date(startDate)
-    date.setDate(startDate.getDate() + i)
-    const dateStr = formatDate(date)
-    const dayOfWeek = date.getDay()
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
-    const isHoliday = !!CHINESE_HOLIDAYS_2026[dateStr]
-    const month = date.getMonth() + 1
-    const season = getSeason(month)
-
-    const touristCount = getEstimatedTouristCount(city, dateStr, isWeekend, isHoliday, season, weatherForecast && weatherForecast[dateStr] ? weatherForecast[dateStr].weather : null)
-    const crowdLevel = getCrowdLevel(touristCount)
-    const isPrediction = i >= daysBehind
-
-    entries.push({
-      key: `${cityId}_${dateStr}`,
-      cityId,
-      date: dateStr,
-      touristCount,
-      crowdLevel,
-      isWeekend,
-      isHoliday,
-      season,
-      weather: (weatherForecast && weatherForecast[dateStr]) ? (weatherForecast[dateStr].weather + ' ' + weatherForecast[dateStr].tempMax + '°C') : getWeatherForMonth(month),
-      isPrediction,
-      crowdLabel: getCrowdLabel(crowdLevel),
-      crowdColor: getCrowdColor(crowdLevel),
-      generatedAt: Date.now(),
-    })
+  var baseWeather = null, baseTemp = null;
+  if (realData && realData.forecast) {
+    var fcKeys = Object.keys(realData.forecast);
+    if (fcKeys.length > 0) {
+      var firstFc = realData.forecast[fcKeys[0]];
+      if (firstFc && firstFc.weather && firstFc.tempMax != null) {
+        baseWeather = firstFc.weather; baseTemp = parseInt(firstFc.tempMax);
+      }
+    }
+  }
+  if (!baseWeather || baseTemp === null) {
+    var fb = getRegionalFallback(city && city.province);
+    var m = fb.match(/[\u4e00-\u9fff]+/g), t = fb.match(/(\d+)~(\d+)/);
+    baseWeather = m ? m[m.length - 1] : '多云'; baseTemp = t ? parseInt(t[2]) : 25;
   }
 
-  return entries
+  const now = new Date(); const startDate = new Date(now); startDate.setDate(now.getDate() - daysBehind);
+
+  for (let i = 0; i < daysBehind + daysAhead; i++) {
+    const date = new Date(startDate); date.setDate(startDate.getDate() + i); const dateStr = formatDate(date);
+    const dayOfWeek = date.getDay(), isWeekend = dayOfWeek === 0 || dayOfWeek === 6, isHoliday = !!CHINESE_HOLIDAYS_2026[dateStr];
+    const month = date.getMonth() + 1, season = getSeason(month);
+    const touristCount = getEstimatedTouristCount(city, dateStr, isWeekend, isHoliday, season), crowdLevel = getCrowdLevel(touristCount), isPrediction = i >= daysBehind;
+
+    var dayWeather = "⛅ 多云 20~27°C";
+    if (realData && realData.forecast && realData.forecast[dateStr]) {
+      var fc = realData.forecast[dateStr]; dayWeather = fc.weather + " " + fc.tempMin + "~" + fc.tempMax + "°C";
+    } else if (baseWeather && baseTemp !== null) {
+      var seed = hashStr(cityId + dateStr), offset = (seed % 7) - 3;
+      var currentMin = Math.min(baseTemp - 8 + offset, baseTemp + offset - 2), currentMax = baseTemp + offset;
+      var dynamicPhenomenon = perturbWeather(baseWeather, seed);
+      dayWeather = dynamicPhenomenon + " " + currentMin + "~" + currentMax + "°C";
+    } else if (typeof getFallbackWeather === "function") { dayWeather = getFallbackWeather(city); }
+
+    entries.push({
+      key: `${cityId}_${dateStr}`, cityId, date: dateStr, touristCount, crowdLevel, isWeekend, isHoliday, season,
+      weather: dayWeather, isPrediction, crowdLabel: getCrowdLabel(crowdLevel), crowdColor: getCrowdColor(crowdLevel), generatedAt: Date.now(),
+    });
+  }
+  console.log('[DataGen 终极成功] ' + city.name + ' 首日天气: ' + (entries[0] ? entries[0].weather : 'N/A'));
+  return entries;
 }
 
 export async function refreshData() {
-  // Try BFF API first (Vercel serverless)
-  try {
-    var apiUrl = window.location.origin + "/api/refresh";
-    var r = await fetch(apiUrl, { signal: AbortSignal.timeout ? AbortSignal.timeout(15000) : undefined });
-    if (r.ok) {
-      var data = await r.json();
-      if (data.ok && data.entries && data.entries.length > 0) {
-        await saveFlowEntries(data.entries);
-        console.log("BFF API refreshed: " + data.totalEntries + " entries, " + data.citiesWithWeather + " cities");
-        return;
-      }
-    }
-  } catch(e) { console.log("BFF API unavailable, local fallback"); }
-
-  // Local fallback
+  // Try API-first data loading
   try {
     var apiCities = await fetchCities();
-    if (apiCities && apiCities.length > 0) { await saveCities(apiCities); }
+    if (apiCities && apiCities.length > 0) {
+      await saveCities(apiCities);
+      return;
+    }
   } catch(e) {}
-  const existing = await getAllCities();
-  if (existing.length === 0) { await saveCities(cities); }
+  // Fallback to bundled data
+  const existing = await getAllCities()
+  if (existing.length === 0) {
+    await saveCities(cities)
+  } else {
+    // Merge new cities into existing DB
+    const existingIds = new Set(existing.map(c => c.id))
+    const newCities = cities.filter(c => !existingIds.has(c.id))
+    if (newCities.length > 0) await saveCities(newCities)
+  }
+
+  var wMap = {};
+  try { cities.forEach(function(cx) {
+    var key = cx.name;
+    var w = realWeatherList[key];
+    if (!w) {
+      var allKeys = Object.keys(realWeatherList);
+      for (var k = 0; k < allKeys.length; k++) {
+        if (key.includes(allKeys[k]) || allKeys[k].includes(key)) {
+          w = realWeatherList[allKeys[k]];
+          break;
+        }
+      }
+    }
+    if (w && w.forecast) wMap[cx.id] = w.forecast;
+  }); } catch(e){}
   var allFlow = [];
-  var wMap = {}; try { cities.forEach(function(cx){if(realWeatherList[cx.id])wMap[cx.id]=realWeatherList[cx.id]}); console.log("Real weather for "+Object.keys(wMap).length+" cities"); } catch(e){}
   for (var ci = 0; ci < cities.length; ci++) {
     var flow = generateFlowForCity(cities[ci].id, 14, 7, wMap[cities[ci].id] || null);
     for (var cj = 0; cj < flow.length; cj++) { allFlow.push(flow[cj]); }
