@@ -46,12 +46,17 @@ export default function SearchPage({ onToggleTheme }) {
     setLoading(true)
     const all = await getAllCities()
     setCities(all)
+    // Load crowd/weather flow for EVERY city (not just the first 30) so each card
+    // shows its own per-city data instead of the identical fallback badge.
+    const now = new Date()
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
     const flows = {}
-    for (const city of all.slice(0, 30)) {
+    const results = await Promise.all(all.map(async (city) => {
       const f = await getFlowForCity(city.id)
-      const today = f.find(e => !e.isPrediction) || f[f.length - 1]
-      flows[city.id] = today
-    }
+      const today = f.find(e => e.date === todayStr) || f.find(e => e.isPrediction) || f.find(e => !e.isPrediction) || f[f.length - 1]
+      return [city.id, today]
+    }))
+    results.forEach(([id, today]) => { flows[id] = today })
     setFlowMap(flows)
     setLoading(false)
   }

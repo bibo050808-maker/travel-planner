@@ -27,6 +27,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,json}'],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: /^https?:\/\/.*\.(?:png|jpg|jpeg|svg|gif|webp)$/,

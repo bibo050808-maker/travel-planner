@@ -1,21 +1,22 @@
 ﻿import { openDB } from 'idb'
 
 const DB_NAME = 'travel-planner'
-const DB_VERSION = 15
+const DB_VERSION = 16
 
 let db = null
 
 export async function initStorage() {
   db = await openDB(DB_NAME, DB_VERSION, {
     upgrade(database) {
-      if (!database.objectStoreNames.contains('cities')) {
-        database.createObjectStore('cities', { keyPath: 'id' })
-      }
-      if (!database.objectStoreNames.contains('flowData')) {
-        const store = database.createObjectStore('flowData', { keyPath: 'key' })
-        store.createIndex('cityId', 'cityId')
-        store.createIndex('date', 'date')
-      }
+      // Force-wipe cities + flow data on upgrade so stale / empty cached entries
+      // (left over from older buggy builds) are cleared and regenerated fresh.
+      if (database.objectStoreNames.contains('cities')) database.deleteObjectStore('cities')
+      database.createObjectStore('cities', { keyPath: 'id' })
+      if (database.objectStoreNames.contains('flowData')) database.deleteObjectStore('flowData')
+      const store = database.createObjectStore('flowData', { keyPath: 'key' })
+      store.createIndex('cityId', 'cityId')
+      store.createIndex('date', 'date')
+      // User-generated data is preserved (create only if missing).
       if (!database.objectStoreNames.contains('userData')) {
         database.createObjectStore('userData', { keyPath: 'id' })
       }

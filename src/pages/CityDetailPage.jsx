@@ -59,7 +59,10 @@ export default function CityDetailPage() {
   const bestMonthsStr = city.bestMonths?.map(m => `${m}月`).join('、')
 
   const predFlows = flows.filter(f => f.isPrediction)
-  const todayFlow = flows.find(f => !f.isPrediction) || flows[flows.length - 1]
+  const _now = new Date()
+  const _todayStr = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`
+  // Prefer the entry for the actual current date, then today's first forecast, then any available row.
+  const todayFlow = flows.find(f => f.date === _todayStr) || predFlows[0] || flows.find(f => !f.isPrediction) || flows[flows.length - 1]
   const crowdAdvice = todayFlow?.crowdLevel <= 2
     ? { label: '✅ 推荐前往', cls: styles.adviceGood }
     : todayFlow?.crowdLevel <= 3
