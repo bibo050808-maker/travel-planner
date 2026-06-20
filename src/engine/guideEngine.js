@@ -117,5 +117,11 @@ export function generateGuide(tripCities, tripRoutes, style) {
   });
   text += '\u51FA\u884C\u63D0\u793A: \u63D0\u524D\u9884\u8BA2\u3001\u5E26\u8EAB\u4EFD\u8BC1\u3001\u4E0B\u8F7D\u79BB\u7EBF\u5730\u56FE\n';
 
-  return { html: html, text: text };
+  // `html` above is a COMPLETE standalone document (good for download). For the
+  // in-app preview we must NOT inject a full document (its <style>/<body> rules
+  // leak globally and break the app layout) — so we also expose just the inner
+  // body fragment, which the scoped `.preview` CSS styles safely.
+  var fullHtml = html;
+  var bodyFragment = fullHtml.replace(/^[\s\S]*?<body>/i, '').replace(/<\/body>[\s\S]*$/i, '');
+  return { html: bodyFragment, fullHtml: fullHtml, text: text };
 }

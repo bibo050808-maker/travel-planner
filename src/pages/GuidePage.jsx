@@ -11,6 +11,7 @@ export default function GuidePage() {
   var _q = useState(''), query = _q[0], setQuery = _q[1];
   var _o = useState(false), dropdown = _o[0], setDropdown = _o[1];
   var _g = useState(''), guideHtml = _g[0], setGuideHtml = _g[1];
+  var _f = useState(''), fullHtml = _f[0], setFullHtml = _f[1];
   var _e = useState(false), editing = _e[0], setEditing = _e[1];
   var _t = useState(''), editText = _t[0], setEditText = _t[1];
   var _d = useState(''), downloadMsg = _d[0], setDownloadMsg = _d[1];
@@ -51,6 +52,7 @@ export default function GuidePage() {
     if (tripCities.length === 0) return;
     var result = generateGuide(tripCities, state.tripRoutes || []);
     setGuideHtml(result.html);
+    setFullHtml(result.fullHtml || result.html);
     setEditText(result.text);
     setEditing(false);
   };
@@ -61,7 +63,8 @@ export default function GuidePage() {
   };
 
   var doDownload = function() {
-    var content = guideHtml;
+    // Download the complete standalone document (or the user's edited text).
+    var content = editing ? editText : (fullHtml || guideHtml);
     if (!content) return;
     var blob = new Blob([content], { type: 'text/html;charset=utf-8' });
     var url = URL.createObjectURL(blob);
@@ -113,7 +116,7 @@ export default function GuidePage() {
           h('button', { className: styles.chipDel, onClick: function() { removeCity(c.id); } }, '✕')
         );
       }),
-      h('button', { className: styles.clearBtn, onClick: function() { if (window.confirm('\u786E\u5B9A\u6E05\u7A7A\u6240\u6709\u57CE\u5E02\u548C\u8DEF\u7EBF\u5417\uFF1F')) { dispatch({ type: 'CLEAR_TRIP' }); setGuideHtml(''); setEditText(''); } } }, '清空')
+      h('button', { className: styles.clearBtn, onClick: function() { if (window.confirm('\u786E\u5B9A\u6E05\u7A7A\u6240\u6709\u57CE\u5E02\u548C\u8DEF\u7EBF\u5417\uFF1F')) { dispatch({ type: 'CLEAR_TRIP' }); setGuideHtml(''); setFullHtml(''); setEditText(''); } } }, '清空')
     ),
 
     // Generate button
