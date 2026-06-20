@@ -88,6 +88,18 @@ function getCrowdColor(level) {
 }
 
 
+function getRegionalFallback(province) {
+  province = province || ''
+  if (/黑龙江|吉林|辽宁|内蒙古/.test(province)) return '晴 12~23℃'
+  if (/新疆|甘肃|青海|宁夏/.test(province)) return '晴 14~26℃'
+  if (/陕西|山西|河北|北京|天津|山东/.test(province)) return '多云 18~28℃'
+  if (/海南|广东|广西/.test(province)) return '晴 28~36℃'
+  if (/云南|贵州|四川|重庆/.test(province)) return '小雨 20~28℃'
+  if (/西藏/.test(province)) return '晴 8~20℃'
+  if (/江苏|浙江|上海|安徽|江西|湖南|湖北|福建/.test(province)) return '多云 24~31℃'
+  return '多云 22~30℃'
+}
+
 function getFallbackWeather(city) { return getRegionalFallback(city && city.province); }
 
 function hashStr(s) { var h = 0; for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h = h | 0; } return Math.abs(h); }
@@ -105,18 +117,22 @@ function perturbWeather(base, seed) {
 }
 export function generateFlowForCity(cityId, daysAhead = 14, daysBehind = 7) {
   const city = cities.find(c => c.id === cityId); if (!city) return [];
-  const entries = [];
-  var safeCityName = (city.name || "").replace(/市|区|城区|县|省/g, "");
-  var realWeatherValues = Object.values(realWeatherList || {});
-  var realData = null;
-  try {
-    realData = realWeatherValues.find(w => {
-      var safeProvince = (w.province || "").replace(/市|区|城区|县|省/g, "");
-      var safeWCity = (w.city || "").replace(/市|区|城区|县|省/g, "");
-      return (safeProvince && (safeProvince.includes(safeCityName) || safeCityName.includes(safeProvince))) || 
-             (safeWCity && (safeWCity.includes(safeCityName) || safeCityName.includes(safeWCity)));
-    });
-  } catch(e) {}
+  const entries = []
+  // Primary lookup: JSON keys are clean city names, so a direct hit works for most cities.
+  var realData = (realWeatherList && city && city.name) ? realWeatherList[city.name] : null;
+  // Fallback lookup: fuzzy match by province / city name when there is no direct hit.
+  if (!realData) {
+    var safeCityName = (city.name || "").replace(/市|区|城区|县|省/g, "");
+    var realWeatherValues = Object.values(realWeatherList || {});
+    try {
+      realData = realWeatherValues.find(w => {
+        var safeProvince = (w.province || "").replace(/市|区|城区|县|省/g, "");
+        var safeWCity = (w.city || "").replace(/市|区|城区|县|省/g, "");
+        return (safeProvince && (safeProvince.includes(safeCityName) || safeCityName.includes(safeProvince))) ||
+               (safeWCity && (safeWCity.includes(safeCityName) || safeCityName.includes(safeWCity)));
+      });
+    } catch (e) {}
+  }
 
   var baseWeather = null, baseTemp = null;
   if (realData && realData.forecast) {
@@ -162,15 +178,9 @@ export function generateFlowForCity(cityId, daysAhead = 14, daysBehind = 7) {
 }
 
 export async function refreshData() {
-  // Try API-first data loading
-  try {
-    var apiCities = await fetchCities();
-    if (apiCities && apiCities.length > 0) {
-      await saveCities(apiCities);
-      return;
-    }
-  } catch(e) {}
-  // Fallback to bundled data
+  // Always use the curated bundled city dataset (rich per-city metadata), then
+  // generate per-city flow + weather below. We intentionally do NOT overwrite the
+  // curated cities with the bland Amap district list (which makes every city identical).
   const existing = await getAllCities()
   if (existing.length === 0) {
     await saveCities(cities)

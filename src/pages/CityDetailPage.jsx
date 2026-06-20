@@ -91,7 +91,7 @@ export default function CityDetailPage() {
         </div>
         <div className={styles.statItem}>
           <div className={styles.statIcon}>🌤️</div>
-          <div className={styles.statVal2}>{todayFlow?.weather?.split(' ')[0] || '晴'}</div>
+          <div className={styles.statVal2}>{todayFlow?.weather || "多云 25°C"}</div>
           <div className={styles.statLabel2}>天气</div>
         </div>
         <div className={styles.statItem}>

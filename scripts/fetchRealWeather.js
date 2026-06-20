@@ -1,42 +1,43 @@
-import fs from "fs";
+﻿import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, "..");
+const ROOT = path.resolve(__dirname,"..");
 const AMAP_KEY = process.env.AMAP_KEY || "";
-import cities from "../src/engine/cities.js";
-
-async function fetchCityWeather(cityName) {
-  var url = "https://restapi.amap.com/v3/weather/weatherInfo?key=" + AMAP_KEY + "&city=" + encodeURIComponent(cityName) + "&extensions=all";
-  try {
-    var r = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined });
-    if (!r.ok) return null;
-    var d = await r.json();
-    if (d.status !== "1" || !d.forecasts || !d.forecasts[0]) return null;
-    var casts = d.forecasts[0].casts || [];
-    var result = {};
-    for (var i = 0; i < casts.length; i++) {
-      result[casts[i].date] = { weather: casts[i].dayweather || "", tempMax: parseInt(casts[i].daytemp) || 0, tempMin: parseInt(casts[i].nighttemp) || 0 };
-    }
-    return result;
-  } catch(e) { return null; }
-}
+import staticCities from "../src/engine/cities.js";
 
 async function main() {
-  if (!AMAP_KEY) { console.error("ERROR: Set AMAP_KEY env var first"); process.exit(1); }
-  console.log("Fetching real weather for " + cities.length + " cities...");
-  var output = {};
-  var ok = 0;
-  for (var i = 0; i < cities.length; i += 5) {
-    var batch = cities.slice(i, Math.min(i + 5, cities.length));
-    var results = await Promise.allSettled(batch.map(async function(c) {
-      var w = await fetchCityWeather(c.name);
-      if (w) { output[c.id] = w; ok++; }
-    }));
-    console.log("  #" + (Math.floor(i / 5) + 1) + ": " + batch.length + " cities (" + ok + " OK)");
-    if (i + 5 < cities.length) await new Promise(function(r) { setTimeout(r, 200); });
+  if(!AMAP_KEY){console.error("ERROR: AMAP_KEY not set");process.exit(1)}
+  var r=await fetch("https://restapi.amap.com/v3/config/district?keywords="+encodeURIComponent("中国")+"&subdistrict=2&key="+AMAP_KEY);
+  var data=await r.json();
+  var seen=new Set();
+  var all=[];
+  staticCities.forEach(function(c){if(!seen.has(c.name)){seen.add(c.name);all.push({name:c.name,province:c.province})}});
+  var provinces=(data.districts&&data.districts[0]&&data.districts[0].districts)||[];
+  provinces.forEach(function(p){(p.districts||[]).forEach(function(c){if(!seen.has(c.name)){seen.add(c.name);all.push({name:c.name,province:p.name})}})});
+  console.log("Total: "+all.length+" cities");
+  console.log("Serial fetch (80ms delay)...");
+  var wm={};var ok=0;
+  for(var i=0;i<all.length;i++){
+    try{
+      var url="https://restapi.amap.com/v3/weather/weatherInfo?key="+AMAP_KEY+"&city="+encodeURIComponent(all[i].name)+"&extensions=all";
+      var rr=await fetch(url,{signal:AbortSignal.timeout?AbortSignal.timeout(3000):undefined});
+      if(rr.ok){
+        var dd=await rr.json();
+        if(dd.status==="1"&&dd.forecasts&&dd.forecasts[0]){
+          var casts=dd.forecasts[0].casts||[];
+          var fc={};
+          casts.forEach(function(cx){fc[cx.date]={weather:cx.dayweather||"",tempMax:parseInt(cx.daytemp)||0,tempMin:parseInt(cx.nighttemp)||0}});
+          wm[all[i].name]={province:all[i].province,forecast:fc};
+          ok++;
+        }
+      }
+    }catch(e){}
+    if((i+1)%50===0)console.log("  "+(i+1)+"/"+all.length+" ("+ok+" OK)");
+    await new Promise(function(rr){setTimeout(rr,80)});
   }
-  fs.writeFileSync(path.resolve(ROOT, "src/engine/realLatestWeather.json"), JSON.stringify(output, null, 2), "utf8");
-  console.log("Done! " + ok + "/" + cities.length + " cities saved.");
+  console.log("Done! "+ok+"/"+all.length+" cities");
+  fs.writeFileSync(path.resolve(ROOT,"src/engine/realLatestWeather.json"),JSON.stringify(wm,null,2),"utf8");
+  console.log("Saved: "+fs.statSync(path.resolve(ROOT,"src/engine/realLatestWeather.json")).size+" bytes");
 }
-main().catch(function(e) { console.error("Fatal:", e); process.exit(1); });
+main().catch(function(e){console.error(e);process.exit(1)});
