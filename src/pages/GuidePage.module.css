@@ -30,22 +30,9 @@
 .dlBtn { background: rgba(76,175,80,0.1); border-color: rgba(76,175,80,0.3); color: #2e7d32; }
 .dlBtn:hover { background: rgba(76,175,80,0.2); }
 .editArea { width: 100%; min-height: 400px; padding: 16px; border: none; background: var(--bg-input); color: var(--text); font-size: 14px; line-height: 1.8; resize: vertical; outline: none; }
-.preview { padding: 20px; color: var(--text); font-size: 15px; line-height: 1.8; max-height: 70vh; overflow-y: auto; }
-.preview h2 { font-size: 18px; color: var(--color-primary-dark); margin: 20px 0 10px; border-left: 4px solid var(--color-primary); padding-left: 12px; }
-.preview h3 { font-size: 14px; color: var(--text-secondary); margin: 12px 0 6px; }
-.preview table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-.preview th, .preview td { border: 1px solid var(--border); padding: 8px; font-size: 12px; }
-.preview th { background: var(--bg-input); }
-.preview .day { background: var(--bg-input); padding: 12px 16px; border-radius: 8px; margin: 8px 0; }
-.preview .tip { background: rgba(79,195,247,0.06); padding: 10px 14px; border-radius: 8px; margin: 6px 0; font-size: 13px; }
-.preview h1 { font-size: 22px; text-align: center; color: var(--color-primary-dark); padding-bottom: 10px; margin: 0 0 12px; border-bottom: 2px solid var(--color-primary); }
-.preview p { margin: 6px 0; }
-.preview ul { padding-left: 20px; }
-.preview li { margin: 4px 0; }
-.preview .tag { display: inline-block; background: rgba(76,175,80,0.12); color: #2e7d32; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin: 2px; }
-.preview .food { display: inline-block; background: rgba(255,152,0,0.14); color: #e65100; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin: 2px; }
-.preview .price { color: #f57f17; font-weight: 600; }
-.preview .footer { text-align: center; color: var(--text-secondary); margin-top: 24px; font-size: 11px; }
+/* Container only. The generated guide ships its own scoped (.tg-guide) styles,
+   so the preview just provides padding + a scroll viewport. */
+.preview { padding: 14px; background: var(--bg-input); max-height: 72vh; overflow-y: auto; }
 .dlMsg { padding: 10px 16px; background: rgba(76,175,80,0.1); color: #2e7d32; font-size: 12px; font-weight: 600; text-align: center; }
 .empty { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
 .emptyIcon { font-size: 64px; margin-bottom: 16px; }

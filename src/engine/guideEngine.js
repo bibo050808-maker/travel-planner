@@ -1,127 +1,489 @@
-import cities from './cities';
-import { generateFoodData, generateStayData } from './foodStayEngine';
+import cities from './cities.js'
+import { generateFoodData, generateStayData } from './foodStayEngine.js'
+import { searchRoutes } from './routeEngine.js'
+import chinaOutline from './chinaOutline.js'
 
-export function generateGuide(tripCities, tripRoutes, style) {
-  style = style || 'classic';
-  var styles = {
-    classic: { days: [['抵达后入住酒店休息整顿', '游览市区中心感受当地氛围', '品尝当地特色美食'], ['上午深度游', '下午继续探索', '傍晚休闲漫步'], ['品尝当地早餐逛市场', '准备离开']] },
-    food: { days: [['抵达后寻找地道小吃', '打卡当地网红美食店', '夜市美食体验'], ['早餐后逛当地菜市场', '美食街深度扫街', '烹饪体验课'], ['早上再去吃一次最爱的', '买些特产准备离开']] },
-    culture: { days: [['抵达后参观当地博物馆', '探访历史建筑群', '文化街区夜游'], ['上午参观主要文化遗址', '下午走访非遗工坊', '看当地特色演出'], ['早上去当地书店/美术馆', '整理旅行笔记后离开']] },
-    relax: { days: [['抵达后悠闲漫步熟悉环境', '找家咖啡馆发呆', '做个SPA放松'], ['自然醒后吃个brunch', '去公园/湖边散步', '享受慢生活'], ['睡到自然醒', '周边随便逛逛后离开']] }
-  };
-  var tmpl = styles[style] || styles.classic;
-  // Reorder cities by route chain
-  var orderedCities = [];
-  var added = {};
+// ============================================================
+// 旅行攻略生成引擎 (Phase 1: 富内容)
+// 输出 { html, fullHtml, text }
+//   html     —— 作用域片段 (<style>.tg ...</style><div class="tg-guide">...</div>)，注入页内预览安全、不污染全局
+//   fullHtml —— 完整独立文档，用于下载
+//   text     —— 纯文本版
+// ============================================================
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+}
+
+function hashStr(s) {
+  var h = 0
+  for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h = h | 0 }
+  return Math.abs(h)
+}
+
+function fmtDur(min) {
+  min = Math.round(min)
+  var h = Math.floor(min / 60), m = min % 60
+  if (h <= 0) return m + '分钟'
+  return h + '小时' + (m > 0 ? m + '分' : '')
+}
+
+function fmtDurShort(min) {
+  min = Math.round(min)
+  var h = Math.floor(min / 60), m = min % 60
+  if (h <= 0) return m + 'min'
+  return h + 'h' + (m > 0 ? m : '')
+}
+
+function seasonOf(month) {
+  if (month >= 3 && month <= 5) return '春'
+  if (month >= 6 && month <= 8) return '夏'
+  if (month >= 9 && month <= 11) return '秋'
+  return '冬'
+}
+
+// ---------------- 城市排序 ----------------
+function orderCities(tripCities, tripRoutes) {
+  var ordered = [], added = {}
   if (tripRoutes && tripRoutes.length > 0) {
-    tripRoutes.forEach(function(r) {
-      var fc = tripCities.find(function(c) { return c.id === r.fromId; });
-      var tc = tripCities.find(function(c) { return c.id === r.toId; });
-      if (fc && !added[fc.id]) { orderedCities.push(fc); added[fc.id] = true; }
-      if (tc && !added[tc.id]) { orderedCities.push(tc); added[tc.id] = true; }
-    });
+    tripRoutes.forEach(function (r) {
+      var fc = tripCities.find(function (c) { return c.id === r.fromId })
+      var tc = tripCities.find(function (c) { return c.id === r.toId })
+      if (fc && !added[fc.id]) { ordered.push(fc); added[fc.id] = true }
+      if (tc && !added[tc.id]) { ordered.push(tc); added[tc.id] = true }
+    })
   }
-  // Add any remaining cities
-  tripCities.forEach(function(c) {
-    if (!added[c.id]) { orderedCities.push(c); added[c.id] = true; }
-  });
-  if (orderedCities.length > 0) { var citiesForGuide = orderedCities; } else { var citiesForGuide = tripCities; }
-  if (!citiesForGuide || citiesForGuide.length === 0) return { html: '', text: '' };
+  tripCities.forEach(function (c) { if (!added[c.id]) { ordered.push(c); added[c.id] = true } })
+  return ordered
+}
 
-  var html = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>旅行攻略</title>' +
-    '<style>body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;max-width:700px;margin:0 auto;padding:20px;color:#333;line-height:1.8}' +
-    'h1{text-align:center;color:#1976d2;font-size:24px;padding-bottom:10px;border-bottom:2px solid #4fc3f7}' +
-    'h2{color:#1976d2;font-size:18px;margin-top:24px;border-left:4px solid #4fc3f7;padding-left:10px}' +
-    'h3{font-size:15px;color:#555}.day{background:#f5f7fa;padding:12px 16px;border-radius:8px;margin:8px 0}' +
-    '.tip{background:#e3f2fd;padding:10px 14px;border-radius:8px;margin:8px 0;font-size:13px}' +
-    '.tag{display:inline-block;background:#e8f5e9;color:#2e7d32;padding:2px 8px;border-radius:4px;font-size:11px;margin:2px}' +
-    '.food{display:inline-block;background:#fff3e0;color:#e65100;padding:2px 8px;border-radius:4px;font-size:11px;margin:2px}' +
-    '.price{color:#f57f17;font-weight:600}ul{padding-left:20px}li{margin:4px 0}' +
-    'table{width:100%;border-collapse:collapse;margin:10px 0}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:13px}' +
-    'th{background:#e3f2fd}.footer{text-align:center;color:#999;margin-top:30px;font-size:11px}</style></head><body>';
+// ---------------- 城际交通 ----------------
+function legInfo(fromCity, toCity) {
+  var r = searchRoutes(fromCity.id, toCity.id)
+  var dist = r.dist || 500
+  var prefer = dist > 1100 ? '飞机' : '高铁'
+  var comfort = (r.comfort || []).find(function (o) { return o.type.indexOf(prefer) >= 0 }) || (r.comfort || [])[0]
+  var cheapest = (r.budget || []).slice().sort(function (a, b) { return a.totalPrice - b.totalPrice })[0]
+  var mode = comfort ? comfort.type : prefer
+  var color = mode.indexOf('飞机') >= 0 ? '#7c3aed' : mode.indexOf('大巴') >= 0 ? '#059669' : '#2563eb'
+  var icon = mode.indexOf('飞机') >= 0 ? '✈️' : mode.indexOf('大巴') >= 0 ? '🚌' : '🚄'
+  return {
+    from: fromCity, to: toCity, dist: dist, mode: mode, color: color, icon: icon,
+    curved: mode.indexOf('飞机') >= 0,
+    durMin: comfort ? comfort.totalDuration : 0,
+    price: comfort ? comfort.totalPrice : 0,
+    comfort: comfort, cheapest: cheapest,
+  }
+}
 
-  var cityNames = citiesForGuide.map(function(c) { return c.name; }).join(' - ');
-  html += '<h1>\uD83C\uDF0D ' + cityNames + '\u4E4B\u65C5</h1>';
-  html += '<p style="text-align:center;color:#888">\u751F\u6210\u65E5\u671F: ' + new Date().toLocaleDateString('zh-CN') + '</p>';
+// ---------------- 离线地图 ----------------
+var MAP_W = 425, MAP_H = 300
+var MAP_BBOX = { minLng: 72, maxLng: 136, minLat: 17, maxLat: 54 }
+function project(lng, lat) {
+  var x = (lng - MAP_BBOX.minLng) / (MAP_BBOX.maxLng - MAP_BBOX.minLng) * MAP_W
+  var y = (MAP_BBOX.maxLat - lat) / (MAP_BBOX.maxLat - MAP_BBOX.minLat) * MAP_H
+  return [Math.round(x * 10) / 10, Math.round(y * 10) / 10]
+}
 
-  html += '<h2>\uD83D\uDCCC \u884C\u7A0B\u6982\u89C8</h2>';
-  html += '<p>\u672C\u6B21\u65C5\u884C\u5171' + citiesForGuide.length + '\u4E2A\u76EE\u7684\u5730\uFF0C\u5EFA\u8BAE\u65C5\u884C\u5929\u6570: ' + (citiesForGuide.length * 3) + ' \u5929</p>';
-  var budget = citiesForGuide.reduce(function(s, c) { return s + (c.avgHotelPrice || 300); }, 0) * citiesForGuide.length + citiesForGuide.length * 200;
-  html += '<p>\u9884\u7B97\u8303\u56F4: \u00A5' + budget + ' \u5DE6\u53F3</p>';
+function outlinePath() {
+  var d = ''
+  ;(chinaOutline.rings || []).forEach(function (ring) {
+    for (var i = 0; i < ring.length; i++) {
+      var p = project(ring[i][0], ring[i][1])
+      d += (i === 0 ? 'M' : 'L') + p[0] + ',' + p[1]
+    }
+    d += 'Z'
+  })
+  return d
+}
 
-  if (tripRoutes && tripRoutes.length > 0) {
-    html += '<h2>\uD83D\uDE89 \u4EA4\u901A\u8DEF\u7EBF</h2>';
-    tripRoutes.forEach(function(r, i) {
-      html += '<div class="day"><strong>\u7B2C' + (i+1) + '\u6BB5: ' + (r.fromName || '?') + ' \u2192 ' + (r.toName || '?') + '</strong>';
-      html += '<br/>\u6A21\u5F0F: ' + (r.mode === 'comfort' ? '\uD83D\uDECB\uFE0F \u8212\u9002' : '\uD83D\uDCB0 \u7701\u94B1') + '</div>';
-    });
+function buildMapSvg(ordered, legs) {
+  var pts = ordered.map(function (c) { var p = project(c.lng, c.lat); return { c: c, x: p[0], y: p[1] } })
+  var parts = []
+  parts.push('<svg class="tg-svg" viewBox="0 0 ' + MAP_W + ' ' + MAP_H + '" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">')
+  // defs: arrow markers per color
+  parts.push('<defs>')
+  ;['#2563eb', '#7c3aed', '#059669'].forEach(function (col, i) {
+    parts.push('<marker id="ar' + i + '" markerWidth="7" markerHeight="7" refX="5.5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="' + col + '"/></marker>')
+  })
+  parts.push('</defs>')
+  // ocean bg
+  parts.push('<rect x="0" y="0" width="' + MAP_W + '" height="' + MAP_H + '" fill="#eef5fb"/>')
+  // land
+  parts.push('<path d="' + outlinePath() + '" fill="#dCEbF7" stroke="#a7c7e3" stroke-width="0.8" stroke-linejoin="round"/>')
+
+  // routes
+  var usedModes = {}
+  function markerIdFor(col) { return col === '#2563eb' ? 'ar0' : col === '#7c3aed' ? 'ar1' : 'ar2' }
+  for (var i = 0; i + 1 < pts.length; i++) {
+    var a = pts[i], b = pts[i + 1], leg = legs[i]
+    var col = leg ? leg.color : '#2563eb'
+    usedModes[leg ? leg.mode : '高铁'] = col
+    var dline
+    if (leg && leg.curved) {
+      var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2
+      var dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1
+      var off = Math.min(38, len * 0.22)
+      var cx = mx - dy / len * off, cy = my + dx / len * off
+      dline = 'M' + a.x + ',' + a.y + ' Q' + cx.toFixed(1) + ',' + cy.toFixed(1) + ' ' + b.x + ',' + b.y
+      parts.push('<path d="' + dline + '" fill="none" stroke="' + col + '" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#' + markerIdFor(col) + ')" opacity="0.9"/>')
+      var lx = cx, ly = cy
+    } else {
+      dline = 'M' + a.x + ',' + a.y + ' L' + b.x + ',' + b.y
+      parts.push('<path d="' + dline + '" fill="none" stroke="' + col + '" stroke-width="2.2" marker-end="url(#' + markerIdFor(col) + ')" opacity="0.92"/>')
+      var lx = (a.x + b.x) / 2, ly = (a.y + b.y) / 2
+    }
+    // distance/time label at midpoint
+    if (leg) {
+      var lbl = leg.dist + 'km·' + leg.icon + fmtDurShort(leg.durMin)
+      parts.push('<text x="' + lx.toFixed(1) + '" y="' + (ly - 4).toFixed(1) + '" class="tg-mlbl" text-anchor="middle" stroke="#fff" stroke-width="3" paint-order="stroke">' + esc(lbl) + '</text>')
+      parts.push('<text x="' + lx.toFixed(1) + '" y="' + (ly - 4).toFixed(1) + '" class="tg-mlbl" text-anchor="middle" fill="' + col + '">' + esc(lbl) + '</text>')
+    }
   }
 
-  citiesForGuide.forEach(function(city, idx) {
-    html += '<h2>\uD83C\uDF06 ' + city.name + ' (' + city.province + ')</h2>';
-    html += '<p>\u6D88\u8D39\u6C34\u5E73: ' + '\uD83D\uDCB0'.repeat(city.costLevel) + ' | \u7F8E\u98DF\u8BC4\u5206: \u2B50 ' + city.foodScore + '/10 | \u4F4F\u5BBF: \u00A5' + city.avgHotelPrice + '/\u665A</p>';
-    if (city.bestMonths) {
-      var mstr = city.bestMonths.map(function(m) { return m + '\u6708'; }).join('\u3001');
-      html += '<p>\uD83D\uDCC5 \u6700\u4F73\u65C5\u884C\u6708\u4EFD: ' + mstr + '</p>';
-    }
-    html += '<div class="day"><strong>\uD83D\uDCCD Day ' + (idx*3+1) + ' \u62B5\u8FBE ' + city.name + '</strong><br/>';
-    html += '\u2022 \u4E0A\u5348\uFF1A\u62B5\u8FBE\u540E\u5165\u4F4F\u9152\u5E97\uFF0C\u4F11\u606F\u6574\u987F<br/>';
-    html += '\u2022 \u4E0B\u5348\uFF1A\u6E38\u89C8\u5E02\u533A\uFF0C\u611F\u53D7\u5F53\u5730\u6C1B\u56F4</div>';
-    var attrs = (city.attractions || []).slice(0, 4);
-    html += '<div class="day"><strong>\uD83D\uDCCD Day ' + (idx*3+2) + ' \u6DF1\u5EA6\u6E38 ' + city.name + '</strong><br/>';
-    var labels = ['\u4E0A\u5348', '\u4E0B\u5348', '\u665A\u4E0A'];
-    if (tmpl.days[1]) tmpl.days[1].forEach(function(t, i) { html += '\u2022 ' + (labels[i]||'') + '\uFF1A' + t + '<br/>'; });
-    html += '</div>';
-    html += '<div class="day"><strong>\uD83D\uDCCD Day ' + (idx*3+3) + ' \u7F8E\u98DF\u4E0E\u79BB\u5F00</strong><br/>';
-    html += '\u2022 \u4E0A\u5348\uFF1A\u54C1\u5C1D\u5F53\u5730\u65E9\u9910\uFF0C\u901B\u5F53\u5730\u5E02\u573A<br/>';
-    html += '\u2022 \u4E0B\u5348\uFF1A\u51C6\u5907\u79BB\u5F00\uFF0C\u524D\u5F80\u4E0B\u4E00\u7AD9</div>';
-    html += '<h3>\uD83C\uDFDB\uFE0F \u70ED\u95E8\u666F\u70B9</h3><p>';
-    (city.attractions || []).forEach(function(a) { html += '<span class="tag">' + a + '</span>'; });
-    html += '</p>';
-    html += '<h3>\uD83C\uDF5C \u7279\u8272\u7F8E\u98DF</h3><p>';
-    (city.cuisines || []).forEach(function(c) { html += '<span class="food">' + c + '</span>'; });
-    html += '</p>';
-    var stays = generateStayData(city);
-    if (stays.length > 0) {
-      html += '<h3>\uD83C\uDFE8 \u4F4F\u5BBF\u63A8\u8350</h3><table><tr><th>\u540D\u79F0</th><th>\u661F\u7EA7</th><th>\u8BC4\u5206</th><th>\u4EF7\u683C</th></tr>';
-      stays.slice(0, 3).forEach(function(s) {
-        html += '<tr><td>' + s.name + '</td><td>' + (s.stars||'') + '</td><td>' + (s.rating||'') + '</td><td class="price">\u00A5' + s.avgPrice + '</td></tr>';
-      });
-      html += '</table>';
-    }
-    var foods = generateFoodData(city);
-    if (foods.length > 0) {
-      html += '<h3>\uD83C\uDF7D\uFE0F \u7F8E\u98DF\u63A8\u8350</h3><table><tr><th>\u540D\u79F0</th><th>\u7C7B\u578B</th><th>\u8BC4\u5206</th><th>\u4EBA\u5747</th></tr>';
-      foods.slice(0, 3).forEach(function(f) {
-        html += '<tr><td>' + f.name + '</td><td>' + (f.category||'') + '</td><td>' + (f.rating||'') + '</td><td class="price">\u00A5' + f.avgPrice + '</td></tr>';
-      });
-      html += '</table>';
-    }
-  });
+  // city dots + labels
+  pts.forEach(function (pt, idx) {
+    var isFirst = idx === 0, isLast = idx === pts.length - 1 && pts.length > 1
+    var ring = isFirst ? '#16a34a' : isLast ? '#dc2626' : '#2563eb'
+    parts.push('<circle cx="' + pt.x + '" cy="' + pt.y + '" r="7" fill="#fff" opacity="0.65"/>')
+    parts.push('<circle cx="' + pt.x + '" cy="' + pt.y + '" r="5" fill="' + ring + '"/>')
+    parts.push('<text x="' + pt.x + '" y="' + (pt.y + 2.8) + '" class="tg-mnum" text-anchor="middle" fill="#fff">' + (idx + 1) + '</text>')
+    var right = pt.x < MAP_W * 0.74
+    var lxx = right ? pt.x + 9 : pt.x - 9
+    var anchor = right ? 'start' : 'end'
+    var lyy = pt.y - 8 + (idx % 2 === 0 ? 0 : 14)
+    parts.push('<text x="' + lxx + '" y="' + lyy + '" class="tg-mcity" text-anchor="' + anchor + '" stroke="#fff" stroke-width="3" paint-order="stroke">' + esc(pt.c.name) + '</text>')
+    parts.push('<text x="' + lxx + '" y="' + lyy + '" class="tg-mcity" text-anchor="' + anchor + '" fill="#1e293b">' + esc(pt.c.name) + '</text>')
+  })
 
-  html += '<h2>\uD83D\uDCA1 \u51FA\u884C\u5C0F\u8D34\u58EB</h2>';
-  html += '<div class="tip">\uD83D\uDCC5 \u63D0\u524D\u9884\u8BA2\u7F51\u7ED3\u4E0E\u9152\u5E97\uFF0C\u907F\u514D\u65FA\u5B63\u6DA8\u4EF7</div>';
-  html += '<div class="tip">\uD83C\uDFA8 \u968F\u8EAB\u643A\u5E26\u8EAB\u4EFD\u8BC1\u3001\u5145\u7535\u5668\u3001\u5E38\u5907\u836F\u54C1</div>';
-  html += '<div class="tip">\uD83D\uDCF1 \u4E0B\u8F7D\u79BB\u7EBF\u5730\u56FE\u548C\u7FFB\u8BD1 App\uFF0C\u4E0D\u6015\u6CA1\u4FE1\u53F7</div>';
-  html += '<div class="tip">\uD83D\uDCB0 \u5E26\u5C11\u91CF\u73B0\u91D1\uFF0C\u624B\u673A\u652F\u4ED8\u5DF2\u8986\u76D6\u5927\u90E8\u5206\u573A\u666F</div>';
-  html += '<div class="footer">\u672C\u653B\u7565\u7531\u65C5\u4F34 App \u81EA\u52A8\u751F\u6210 | ' + new Date().toLocaleDateString('zh-CN') + '</div>';
-  html += '</body></html>';
+  // compass
+  parts.push('<g transform="translate(20,26)"><path d="M0,-12 L4,6 L0,2 L-4,6 Z" fill="#dc2626"/><text x="0" y="-15" class="tg-mcomp" text-anchor="middle" fill="#475569">N</text></g>')
 
-  var text = cityNames + '\u4E4B\u65C5\u653B\u7565\n\n';
-  text += '\u884C\u7A0B\u6982\u89C8: ' + citiesForGuide.length + '\u4E2A\u57CE\u5E02\uFF0C' + (citiesForGuide.length * 3) + '\u5929\n\n';
-  citiesForGuide.forEach(function(c, i) {
-    text += '\u3010' + c.name + '\u3011\n';
-    text += '\u666F\u70B9: ' + (c.attractions || []).join('\u3001') + '\n';
-    text += '\u7F8E\u98DF: ' + (c.cuisines || []).join('\u3001') + '\n';
-    text += '\u4F4F\u5BBF: \u00A5' + c.avgHotelPrice + '/\u665A\u3001\u6D88\u8D39\u7B49\u7EA7: ' + c.costLevel + '/5\n\n';
-  });
-  text += '\u51FA\u884C\u63D0\u793A: \u63D0\u524D\u9884\u8BA2\u3001\u5E26\u8EAB\u4EFD\u8BC1\u3001\u4E0B\u8F7D\u79BB\u7EBF\u5730\u56FE\n';
+  // legend
+  var modeKeys = Object.keys(usedModes)
+  if (modeKeys.length > 0) {
+    var ly0 = MAP_H - 8 - (modeKeys.length - 1) * 15
+    parts.push('<rect x="' + (MAP_W - 92) + '" y="' + (ly0 - 13) + '" width="86" height="' + (modeKeys.length * 15 + 6) + '" rx="5" fill="#ffffff" opacity="0.78"/>')
+    modeKeys.forEach(function (m, i) {
+      var yy = ly0 + i * 15
+      parts.push('<line x1="' + (MAP_W - 86) + '" y1="' + (yy - 3) + '" x2="' + (MAP_W - 68) + '" y2="' + (yy - 3) + '" stroke="' + usedModes[m] + '" stroke-width="2.4"/>')
+      parts.push('<text x="' + (MAP_W - 64) + '" y="' + yy + '" class="tg-mleg" fill="#334155">' + esc(m) + '</text>')
+    })
+  }
+  parts.push('</svg>')
+  return parts.join('')
+}
 
-  // `html` above is a COMPLETE standalone document (good for download). For the
-  // in-app preview we must NOT inject a full document (its <style>/<body> rules
-  // leak globally and break the app layout) — so we also expose just the inner
-  // body fragment, which the scoped `.preview` CSS styles safely.
-  var fullHtml = html;
-  var bodyFragment = fullHtml.replace(/^[\s\S]*?<body>/i, '').replace(/<\/body>[\s\S]*$/i, '');
-  return { html: bodyFragment, fullHtml: fullHtml, text: text };
+// ---------------- 逐日行程 ----------------
+var STYLE_CFG = {
+  classic: { name: '经典', night: ['品尝当地特色晚餐', '夜游核心商圈', '老街夜市觅食'] },
+  food: { name: '美食', night: ['打卡网红美食店', '夜市深度扫街', '地道宵夜小馆'] },
+  culture: { name: '文化', night: ['观看当地特色演出', '文化街区夜游', '书店/美术馆漫步'] },
+  relax: { name: '休闲', night: ['咖啡馆发呆放松', '江边/湖边夜散步', '做个 SPA 解乏'] },
+}
+
+function highlightFor(city, attr) {
+  var tags = city.tags || []
+  var pool = []
+  if (tags.indexOf('山水') >= 0 || tags.indexOf('自然') >= 0) pool.push('饱览自然山水', '呼吸清新空气')
+  if (tags.indexOf('文化') >= 0 || tags.indexOf('历史') >= 0) pool.push('感受历史底蕴', '触摸城市记忆')
+  if (tags.indexOf('海滨') >= 0 || tags.indexOf('度假') >= 0) pool.push('看海听浪吹风', '享受海岛慢时光')
+  if (tags.indexOf('古镇') >= 0) pool.push('漫步古巷石桥', '寻一处烟火人家')
+  if (tags.indexOf('美食') >= 0) pool.push('边逛边尝小吃', '寻味地道烟火')
+  if (pool.length === 0) pool.push('打卡地标', '深度漫游')
+  return pool[hashStr(city.id + attr) % pool.length]
+}
+
+function buildItinerary(city, days, style, isFirstCity) {
+  var cfg = STYLE_CFG[style] || STYLE_CFG.classic
+  var attrs = (city.attractions || []).slice()
+  var nights = cfg.night
+  var cuisines = city.cuisines || []
+  // 上午/下午的观光位
+  var sightSlots = []
+  for (var d = 0; d < days; d++) { sightSlots.push({ day: d, t: '上午' }); sightSlots.push({ day: d, t: '下午' }) }
+  // 第一天上午固定为抵达
+  var arrivalText = isFirstCity ? ('抵达' + city.name + '，入住酒店稍作休整') : ('抵达' + city.name + '，安顿后开启行程')
+  var assign = {}
+  // day0 上午 = arrival
+  assign['0-上午'] = { kind: 'arrive', text: arrivalText }
+  var ai = 0
+  for (var s = 0; s < sightSlots.length; s++) {
+    var slot = sightSlots[s]
+    var key = slot.day + '-' + slot.t
+    if (key === '0-上午') continue
+    if (ai < attrs.length) {
+      var a = attrs[ai++]
+      var dur = 2 + (hashStr(city.id + a) % 2) // 2~3h
+      assign[key] = { kind: 'sight', text: '游览' + a, hi: highlightFor(city, a), dur: dur + '小时' }
+    } else {
+      assign[key] = { kind: 'free', text: '自由活动 / 周边漫步', hi: '随心而行', dur: '' }
+    }
+  }
+  // 最后一天下午改为返程准备
+  assign[(days - 1) + '-下午'] = { kind: 'leave', text: days > 1 ? '采购特产，准备前往下一站' : '自由活动后准备离开', hi: '收好行李与回忆', dur: '' }
+
+  var out = []
+  for (var dd = 0; dd < days; dd++) {
+    var rows = ''
+    ;['上午', '下午', '晚上'].forEach(function (t) {
+      var item
+      if (t === '晚上') {
+        var nightText = nights[dd % nights.length]
+        if (cuisines.length > 0 && (style === 'food' || dd % 2 === 0)) nightText = '品尝' + cuisines[dd % cuisines.length] + ' 等地道美味'
+        item = { kind: 'night', text: nightText, hi: '', dur: '' }
+      } else {
+        item = assign[dd + '-' + t] || { kind: 'free', text: '自由活动', hi: '', dur: '' }
+      }
+      var badge = t === '上午' ? 'tg-am' : t === '下午' ? 'tg-pm' : 'tg-ev'
+      rows += '<div class="tg-slot"><span class="tg-tbadge ' + badge + '">' + t + '</span>'
+      rows += '<div class="tg-slotbody"><span class="tg-slottext">' + esc(item.text) + '</span>'
+      if (item.hi) rows += '<span class="tg-slothi">· ' + esc(item.hi) + '</span>'
+      if (item.dur) rows += '<span class="tg-dur">⏱ ' + esc(item.dur) + '</span>'
+      rows += '</div></div>'
+    })
+    out.push('<div class="tg-day"><div class="tg-daynum">Day ' + (dd + 1) + '</div>' + rows + '</div>')
+  }
+  return out.join('')
+}
+
+// ---------------- 预算 ----------------
+function buildBudget(ordered, legs, days, tierMul) {
+  var nightsTotal = 0, lodging = 0, food = 0, tickets = 0
+  ordered.forEach(function (c) {
+    var n = Math.max(1, days)
+    nightsTotal += n
+    lodging += (c.avgHotelPrice || 300) * n * tierMul
+    food += (c.costLevel * 55 + 70) * n
+    tickets += 180
+  })
+  var transport = 0
+  legs.forEach(function (l) { transport += l.price || 0 })
+  var misc = ordered.length * days * 40
+  var base = Math.round(lodging + food + transport + tickets + misc)
+  var lo = Math.round(base * 0.78), hi = Math.round(base * 1.3)
+  return {
+    rows: [
+      ['🚄 城际交通', legs.length + ' 段 · 单程推荐方案', Math.round(transport)],
+      ['🏨 住宿', nightsTotal + ' 晚 · 中端档', Math.round(lodging)],
+      ['🍜 餐饮', days * ordered.length + ' 人天', Math.round(food)],
+      ['🎫 门票', ordered.length + ' 城景点', Math.round(tickets)],
+      ['🧳 杂项', '市内交通/购物', Math.round(misc)],
+    ],
+    base: base, lo: lo, hi: hi, nights: nightsTotal,
+  }
+}
+
+// ---------------- 吃住精选 ----------------
+function stayTable(city) {
+  var rows = generateStayData(city).slice(0, 3).map(function (s) {
+    return '<tr><td><b>' + esc(s.name) + '</b><span class="tg-mini">' + esc(s.category) + ' ' + esc(s.stars) + '</span></td>' +
+      '<td>⭐' + s.rating + '</td><td>' + esc((s.tags || [])[0] || '') + '</td><td class="tg-price">¥' + s.avgPrice + '</td></tr>'
+  }).join('')
+  return '<table class="tg-tbl"><thead><tr><th>酒店</th><th>评分</th><th>特点</th><th>均价/晚</th></tr></thead><tbody>' + rows + '</tbody></table>'
+}
+function foodTable(city) {
+  var rows = generateFoodData(city).slice(0, 3).map(function (f) {
+    return '<tr><td><b>' + esc(f.name) + '</b><span class="tg-mini">' + esc(f.category) + '</span></td>' +
+      '<td>⭐' + f.rating + '</td><td>' + f.recommendRate + '%荐</td><td class="tg-price">¥' + f.avgPrice + '/人</td></tr>'
+  }).join('')
+  return '<table class="tg-tbl"><thead><tr><th>餐厅</th><th>评分</th><th>推荐</th><th>人均</th></tr></thead><tbody>' + rows + '</tbody></table>'
+}
+
+// ---------------- 出行贴士 ----------------
+function buildTips(ordered, month) {
+  var season = seasonOf(month)
+  var tips = []
+  var packBySeason = {
+    '春': '🌸 春季多变，备一件薄外套和雨具',
+    '夏': '☀️ 夏季炎热，防晒霜、遮阳帽、补水必备',
+    '秋': '🍁 秋高气爽，早晚温差大，备件外套',
+    '冬': '❄️ 冬季寒冷，羽绒服、保暖内衣不能少',
+  }
+  tips.push(packBySeason[season])
+  var allTags = {}
+  ordered.forEach(function (c) { (c.tags || []).forEach(function (t) { allTags[t] = true }) })
+  if (allTags['高原']) tips.push('🏔️ 含高原地区，提前适应、备好抗高反药物，行程放缓')
+  if (allTags['海滨'] || allTags['度假']) tips.push('🏖️ 海边紫外线强，泳衣、防水袋、防晒别忘')
+  if (allTags['冰雪']) tips.push('🧤 冰雪目的地路面湿滑，防滑鞋、手套、暖宝宝备齐')
+  if (allTags['沙漠']) tips.push('🏜️ 沙漠昼夜温差极大，防风沙口罩与厚外套必备')
+  tips.push('📅 提前预订往返票与首晚酒店，避开周末与节假日涨价')
+  tips.push('📱 下载离线地图与翻译 App，带少量现金以备不时之需')
+  return tips.map(function (t) { return '<div class="tg-tip">' + esc(t) + '</div>' }).join('')
+}
+
+// ---------------- 样式 ----------------
+var GUIDE_CSS =
+  '.tg-guide{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;max-width:760px;margin:0 auto;color:#1f2937;line-height:1.7;font-size:14px;-webkit-text-size-adjust:100%}' +
+  '.tg-guide *{box-sizing:border-box}' +
+  '.tg-hd{background:linear-gradient(135deg,#4fc3f7,#1976d2);color:#fff;border-radius:14px;padding:20px 22px;margin-bottom:16px}' +
+  '.tg-hd h1{margin:0;font-size:22px;font-weight:800;letter-spacing:0.5px}' +
+  '.tg-sub{margin-top:8px;font-size:13px;opacity:0.95}' +
+  '.tg-sub b{font-weight:700}' +
+  '.tg-card{background:#fff;border:1px solid #e6eaf0;border-radius:12px;padding:16px 18px;margin-bottom:14px}' +
+  '.tg-card>h2{margin:0 0 12px;font-size:16px;color:#0f3d6b;border-left:4px solid #4fc3f7;padding-left:10px;line-height:1.2}' +
+  '.tg-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}' +
+  '.tg-stat{background:#f4f8fc;border-radius:10px;padding:10px;text-align:center}' +
+  '.tg-stat .v{font-size:18px;font-weight:800;color:#1976d2}' +
+  '.tg-stat .l{font-size:11px;color:#6b7280;margin-top:2px}' +
+  '.tg-svg{width:100%;height:auto;display:block;border-radius:10px;border:1px solid #e6eaf0}' +
+  '.tg-mlbl{font-size:8px;font-weight:700}' +
+  '.tg-mnum{font-size:7px;font-weight:800}' +
+  '.tg-mcity{font-size:9px;font-weight:700}' +
+  '.tg-mcomp{font-size:8px;font-weight:700}' +
+  '.tg-mleg{font-size:8px}' +
+  '.tg-city{background:#fff;border:1px solid #e6eaf0;border-radius:12px;padding:16px 18px;margin-bottom:14px}' +
+  '.tg-cityhd{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;border-bottom:1px dashed #e2e8f0;padding-bottom:10px;margin-bottom:12px}' +
+  '.tg-cityhd .nm{font-size:18px;font-weight:800;color:#0f3d6b}' +
+  '.tg-cityhd .pv{font-size:12px;color:#6b7280}' +
+  '.tg-tag{display:inline-block;background:#e8f3ff;color:#1565c0;border-radius:5px;font-size:11px;padding:1px 7px;margin-left:2px}' +
+  '.tg-qstat{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#374151;margin-bottom:12px}' +
+  '.tg-qstat span b{color:#1976d2}' +
+  '.tg-day{background:#f7fafd;border:1px solid #eef2f7;border-radius:10px;padding:10px 12px;margin-bottom:10px}' +
+  '.tg-daynum{font-weight:800;color:#1976d2;font-size:13px;margin-bottom:6px}' +
+  '.tg-slot{display:flex;gap:8px;align-items:flex-start;padding:4px 0}' +
+  '.tg-tbadge{flex:none;font-size:11px;font-weight:700;color:#fff;border-radius:5px;padding:2px 7px;margin-top:1px;width:34px;text-align:center}' +
+  '.tg-am{background:#f59e0b}.tg-pm{background:#3b82f6}.tg-ev{background:#8b5cf6}' +
+  '.tg-slotbody{flex:1}' +
+  '.tg-slottext{font-weight:600;color:#1f2937}' +
+  '.tg-slothi{color:#64748b;font-size:12px;margin-left:6px}' +
+  '.tg-dur{display:inline-block;color:#0ea5a3;font-size:11px;margin-left:8px;background:#e6fffb;border-radius:4px;padding:0 5px}' +
+  '.tg-sub2{font-weight:700;color:#334155;font-size:13px;margin:12px 0 6px}' +
+  '.tg-chips{display:flex;flex-wrap:wrap;gap:6px}' +
+  '.tg-chip{display:inline-block;background:#e8f5e9;color:#2e7d32;border-radius:5px;font-size:12px;padding:2px 9px}' +
+  '.tg-chip.food{background:#fff3e0;color:#e65100}' +
+  '.tg-tbl{width:100%;border-collapse:collapse;margin:6px 0 2px;font-size:12px}' +
+  '.tg-tbl th{background:#f1f5f9;color:#475569;text-align:left;padding:7px 9px;font-weight:600}' +
+  '.tg-tbl td{border-top:1px solid #eef2f7;padding:7px 9px;vertical-align:top}' +
+  '.tg-tbl .tg-mini{display:block;color:#94a3b8;font-size:10px;font-weight:400}' +
+  '.tg-price{color:#f57f17;font-weight:700;white-space:nowrap}' +
+  '.tg-leg{display:flex;align-items:center;gap:10px;background:#f7fafd;border:1px solid #eef2f7;border-radius:10px;padding:10px 12px;margin-bottom:8px;flex-wrap:wrap}' +
+  '.tg-legroute{font-weight:800;color:#0f3d6b;font-size:14px;flex:none}' +
+  '.tg-opt{font-size:12px;color:#374151;background:#fff;border:1px solid #e6eaf0;border-radius:8px;padding:4px 9px}' +
+  '.tg-opt b{color:#1976d2}' +
+  '.tg-save{color:#16a34a;font-size:11px;font-weight:700}' +
+  '.tg-budget td.tot{font-weight:800;color:#0f3d6b}' +
+  '.tg-brange{margin-top:8px;font-size:13px}' +
+  '.tg-brange .big{font-size:20px;font-weight:800;color:#e65100}' +
+  '.tg-tip{background:#eef7ff;border-left:3px solid #4fc3f7;border-radius:6px;padding:8px 12px;margin-bottom:7px;font-size:13px;color:#334155}' +
+  '.tg-footer{text-align:center;color:#9aa5b1;font-size:11px;margin-top:18px;padding-top:10px;border-top:1px dashed #e2e8f0}' +
+  '@media(max-width:520px){.tg-grid{grid-template-columns:repeat(2,1fr)}.tg-hd h1{font-size:19px}}'
+
+// ---------------- 主函数 ----------------
+export function generateGuide(tripCities, tripRoutes, options) {
+  options = options || {}
+  var style = options.style || 'classic'
+  var days = Math.max(1, Math.min(5, options.daysPerCity || 3))
+  var month = options.month || (new Date().getMonth() + 1)
+  var tierMul = options.budgetTier === 'economy' ? 0.7 : options.budgetTier === 'lux' ? 1.4 : 1.0
+
+  var ordered = orderCities(tripCities || [], tripRoutes || [])
+  if (!ordered || ordered.length === 0) return { html: '', fullHtml: '', text: '' }
+
+  var legs = []
+  for (var i = 0; i + 1 < ordered.length; i++) legs.push(legInfo(ordered[i], ordered[i + 1]))
+  var totalDist = legs.reduce(function (s, l) { return s + l.dist }, 0)
+  var totalDays = ordered.length * days
+  var budget = buildBudget(ordered, legs, days, tierMul)
+  var cityNames = ordered.map(function (c) { return c.name }).join(' → ')
+  var cfg = STYLE_CFG[style] || STYLE_CFG.classic
+
+  var c = ''
+  // header
+  c += '<div class="tg-hd"><h1>🧭 ' + esc(cityNames) + ' 之旅</h1>' +
+    '<div class="tg-sub">' + new Date().toLocaleDateString('zh-CN') + ' 生成 · <b>' + totalDays + '</b> 天 · <b>' + ordered.length + '</b> 城 · ' + cfg.name + '玩法 · 预算 <b>¥' + budget.lo + '–' + budget.hi + '</b>/人</div></div>'
+
+  // map
+  c += '<section class="tg-card"><h2>🗺️ 行程地图</h2>' + buildMapSvg(ordered, legs) + '</section>'
+
+  // overview
+  c += '<section class="tg-card"><h2>📌 行程总览</h2><div class="tg-grid">' +
+    '<div class="tg-stat"><div class="v">' + totalDays + '</div><div class="l">总天数</div></div>' +
+    '<div class="tg-stat"><div class="v">' + ordered.length + '</div><div class="l">目的地</div></div>' +
+    '<div class="tg-stat"><div class="v">' + totalDist + '</div><div class="l">总里程km</div></div>' +
+    '<div class="tg-stat"><div class="v">¥' + budget.base + '</div><div class="l">人均预算</div></div>' +
+    '</div></section>'
+
+  // per city
+  ordered.forEach(function (city, idx) {
+    c += '<section class="tg-city">'
+    c += '<div class="tg-cityhd"><span class="nm">' + (idx + 1) + '. ' + esc(city.name) + '</span><span class="pv">' + esc(city.province) + '</span>' +
+      (city.tags || []).map(function (t) { return '<span class="tg-tag">' + esc(t) + '</span>' }).join('') + '</div>'
+    c += '<div class="tg-qstat"><span>消费 <b>' + '💰'.repeat(city.costLevel) + '</b></span>' +
+      '<span>美食 <b>⭐' + city.foodScore + '</b></span>' +
+      '<span>住宿 <b>¥' + city.avgHotelPrice + '/晚</b></span>' +
+      '<span>最佳月份 <b>' + (city.bestMonths || []).map(function (m) { return m + '月' }).join('、') + '</b></span></div>'
+    c += '<div class="tg-sub2">🗓️ ' + days + ' 天行程安排</div>'
+    c += buildItinerary(city, days, style, idx === 0)
+    c += '<div class="tg-sub2">🏛️ 必打卡景点</div><div class="tg-chips">' +
+      (city.attractions || []).map(function (a) { return '<span class="tg-chip">' + esc(a) + '</span>' }).join('') + '</div>'
+    c += '<div class="tg-sub2">🍜 不可错过的美味</div><div class="tg-chips">' +
+      (city.cuisines || []).map(function (a) { return '<span class="tg-chip food">' + esc(a) + '</span>' }).join('') + '</div>'
+    c += '<div class="tg-sub2">🏨 住宿推荐</div>' + stayTable(city)
+    c += '<div class="tg-sub2">🍽️ 美食推荐</div>' + foodTable(city)
+    c += '</section>'
+  })
+
+  // transport
+  if (legs.length > 0) {
+    c += '<section class="tg-card"><h2>🚄 城际交通</h2>'
+    legs.forEach(function (l) {
+      c += '<div class="tg-leg"><span class="tg-legroute">' + esc(l.from.name) + ' → ' + esc(l.to.name) + '</span>'
+      c += '<span class="tg-opt">推荐 ' + l.icon + esc(l.mode) + ' · <b>' + fmtDur(l.durMin) + '</b> · ¥' + l.price + '</span>'
+      if (l.cheapest) {
+        c += '<span class="tg-opt">省钱 ' + esc(l.cheapest.icon || '') + esc(l.cheapest.type) + ' · ¥' + l.cheapest.totalPrice + '</span>'
+        if (l.cheapest.savings > 0) c += '<span class="tg-save">省¥' + l.cheapest.savings + '</span>'
+      }
+      c += '<span class="tg-opt">约 ' + l.dist + ' km</span></div>'
+    })
+    c += '</section>'
+  }
+
+  // budget
+  c += '<section class="tg-card"><h2>💰 预算明细 (人均)</h2><table class="tg-tbl tg-budget"><thead><tr><th>项目</th><th>明细</th><th>金额</th></tr></thead><tbody>'
+  budget.rows.forEach(function (r) { c += '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td><td class="tg-price">¥' + r[2] + '</td></tr>' })
+  c += '<tr><td class="tot">合计</td><td class="tot">' + budget.nights + ' 晚 · ' + totalDays + ' 天</td><td class="tot tg-price">¥' + budget.base + '</td></tr>'
+  c += '</tbody></table><div class="tg-brange">💡 参考区间：<span class="big">¥' + budget.lo + ' ~ ¥' + budget.hi + '</span> / 人（经济 ~ 舒适）</div></section>'
+
+  // tips
+  c += '<section class="tg-card"><h2>🎒 出行贴士</h2>' + buildTips(ordered, month) + '</section>'
+
+  // footer
+  c += '<div class="tg-footer">本攻略由「旅伴」根据真实城市、景点、交通与天气数据自动生成 · ' + new Date().toLocaleDateString('zh-CN') + '</div>'
+
+  var styleBlock = '<style>' + GUIDE_CSS + '</style>'
+  var html = styleBlock + '<div class="tg-guide">' + c + '</div>'
+  var fullHtml = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>' + esc(cityNames) + ' 旅行攻略</title><style>body{margin:0;background:#eef2f7;padding:16px}' + GUIDE_CSS + '</style></head><body>' +
+    '<div class="tg-guide">' + c + '</div></body></html>'
+
+  // 纯文本版
+  var text = cityNames + ' 之旅攻略\n\n'
+  text += '行程：' + totalDays + ' 天 · ' + ordered.length + ' 城 · 人均预算 ¥' + budget.lo + '~' + budget.hi + '\n\n'
+  ordered.forEach(function (city, i) {
+    text += '【' + (i + 1) + '. ' + city.name + ' · ' + city.province + '】\n'
+    text += '景点：' + (city.attractions || []).join('、') + '\n'
+    text += '美食：' + (city.cuisines || []).join('、') + '\n'
+    text += '住宿：¥' + city.avgHotelPrice + '/晚 · 最佳月份 ' + (city.bestMonths || []).join('、') + '\n\n'
+  })
+  legs.forEach(function (l) { text += l.from.name + ' → ' + l.to.name + '：' + l.mode + ' 约 ' + fmtDur(l.durMin) + ' ¥' + l.price + '（' + l.dist + 'km）\n' })
+  return { html: html, fullHtml: fullHtml, text: text }
+}
+
+// ---------------- 人流统计 (Phase 2 使用) ----------------
+export function getCrowdStatsForCity(flowData) {
+  if (!flowData || flowData.length === 0) return { avgLevel: 0, lowDays: 0, midDays: 0, highDays: 0, bestDates: [] }
+  var levels = flowData.map(function (f) { return f.crowdLevel })
+  var avg = Math.round(levels.reduce(function (a, b) { return a + b }, 0) / levels.length)
+  var low = flowData.filter(function (f) { return f.crowdLevel <= 2 }).length
+  var mid = flowData.filter(function (f) { return f.crowdLevel === 3 }).length
+  var high = flowData.filter(function (f) { return f.crowdLevel >= 4 }).length
+  var bestDates = []
+  for (var i = 1; i < flowData.length; i++) {
+    if (flowData[i].crowdLevel <= 2 && flowData[i - 1].crowdLevel <= 2) {
+      if (bestDates.indexOf(flowData[i - 1].date) < 0) bestDates.push(flowData[i - 1].date)
+      if (bestDates.indexOf(flowData[i].date) < 0) bestDates.push(flowData[i].date)
+    }
+  }
+  return { avgLevel: avg, lowDays: low, midDays: mid, highDays: high, bestDates: bestDates }
 }
