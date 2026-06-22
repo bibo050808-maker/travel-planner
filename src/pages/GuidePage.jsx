@@ -15,6 +15,10 @@ export default function GuidePage() {
   var _e = useState(false), editing = _e[0], setEditing = _e[1];
   var _t = useState(''), editText = _t[0], setEditText = _t[1];
   var _d = useState(''), downloadMsg = _d[0], setDownloadMsg = _d[1];
+  var _sx = useState('classic'), guideStyle = _sx[0], setGuideStyle = _sx[1];
+  var _dy = useState(3), guideDays = _dy[0], setGuideDays = _dy[1];
+  var _bz = useState('comfort'), guideBudget = _bz[0], setGuideBudget = _bz[1];
+  var _pc = useState('normal'), guidePace = _pc[0], setGuidePace = _pc[1];
   var ref = useRef(null);
 
   useEffect(function() {
@@ -56,7 +60,7 @@ export default function GuidePage() {
       var flows = await Promise.all(tripCities.map(function(c) { return getFlowForCity(c.id).catch(function() { return []; }); }));
       tripCities.forEach(function(c, i) { flowByCity[c.id] = flows[i] || []; });
     } catch (e) { /* 人流数据缺失时降级为纯行程 */ }
-    var result = generateGuide(tripCities, state.tripRoutes || [], { flowByCity: flowByCity });
+    var result = generateGuide(tripCities, state.tripRoutes || [], { flowByCity: flowByCity, style: guideStyle, daysPerCity: guideDays, budgetTier: guideBudget, pace: guidePace });
     setGuideHtml(result.html);
     setFullHtml(result.fullHtml || result.html);
     setEditText(result.text);
@@ -112,6 +116,37 @@ export default function GuidePage() {
           })
         )
       )
+    ),
+
+    // 3-PHASE 设置：风格 · 每城天数 · 预算 · 节奏
+    h('div', { className: styles.styleRow },
+      h('span', { className: styles.optLabel }, '🎨 风格'),
+      ['classic','food','culture','relax'].map(function(k) {
+        var labels={classic:'经典',food:'美食',culture:'文化',relax:'休闲'};
+        return h('button', { key:k, className: styles.styleBtn + (guideStyle===k?' '+styles.styleActive:''),
+          onClick: function() { setGuideStyle(k); } }, labels[k]);
+      })
+    ),
+    h('div', { className: styles.styleRow },
+      h('span', { className: styles.optLabel }, '📅 天数'),
+      [1,2,3,4,5].map(function(d) {
+        return h('button', { key:d, className: styles.styleBtn + (guideDays===d?' '+styles.styleActive:''),
+          onClick: function() { setGuideDays(d); } }, d+'天');
+      }),
+      h('span', { className: styles.optSep }, ''),
+      h('span', { className: styles.optLabel }, '💰 预算'),
+      ['comfort','economy'].map(function(b) {
+        var bl={comfort:'舒适',economy:'经济'};
+        return h('button', { key:b, className: styles.styleBtn + (guideBudget===b?' '+styles.styleActive:''),
+          onClick: function() { setGuideBudget(b); } }, bl[b]);
+      }),
+      h('span', { className: styles.optSep }, ''),
+      h('span', { className: styles.optLabel }, '⏱ 节奏'),
+      ['normal','relax','compact'].map(function(p) {
+        var pl={normal:'均衡',relax:'轻松',compact:'紧凑'};
+        return h('button', { key:p, className: styles.styleBtn + (guidePace===p?' '+styles.styleActive:''),
+          onClick: function() { setGuidePace(p); } }, pl[p]);
+      })
     ),
 
     // Selected cities

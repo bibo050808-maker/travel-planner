@@ -42,3 +42,5 @@
 .styleBtn { flex-shrink: 0; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); font-size: 12px; cursor: pointer; transition: all 0.15s; }
 .styleBtn:hover { border-color: var(--color-primary); }
 .styleActive { background: rgba(79,195,247,0.12); border-color: var(--color-primary); color: var(--color-primary-dark); font-weight: 600; }
+.optLabel { font-size: 11px; color: var(--text-secondary); font-weight: 600; white-space: nowrap; }
+.optSep { width: 6px; flex: none; }

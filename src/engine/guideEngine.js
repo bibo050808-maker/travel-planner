@@ -194,14 +194,14 @@ function highlightFor(city, attr) {
   return pool[hashStr(city.id + attr) % pool.length]
 }
 
-function buildItinerary(city, days, style, isFirstCity, dayDates, flowMap) {
+function buildItinerary(city, days, style, isFirstCity, dayDates, flowMap, pace) {
   var cfg = STYLE_CFG[style] || STYLE_CFG.classic
   var attrs = (city.attractions || []).slice()
   var nights = cfg.night
   var cuisines = city.cuisines || []
-  // 上午/下午的观光位
+  // 上午/下午的观光位（轻松模式仅取上午，下午自由）
   var sightSlots = []
-  for (var d = 0; d < days; d++) { sightSlots.push({ day: d, t: '上午' }); sightSlots.push({ day: d, t: '下午' }) }
+  for (var d = 0; d < days; d++) { sightSlots.push({ day: d, t: '上午' }); if (pace !== 'relax') sightSlots.push({ day: d, t: '下午' }) }
   // 第一天上午固定为抵达
   var arrivalText = isFirstCity ? ('抵达' + city.name + '，入住酒店稍作休整') : ('抵达' + city.name + '，安顿后开启行程')
   var assign = {}
@@ -406,6 +406,7 @@ export function generateGuide(tripCities, tripRoutes, options) {
   var month = options.month || (new Date().getMonth() + 1)
   var tierMul = options.budgetTier === 'economy' ? 0.7 : options.budgetTier === 'lux' ? 1.4 : 1.0
   var flowByCity = options.flowByCity || {}
+  var pace = options.pace || 'normal'
   var dayCursor = new Date()
 
   var ordered = orderCities(tripCities || [], tripRoutes || [])
@@ -462,7 +463,7 @@ export function generateGuide(tripCities, tripRoutes, options) {
       }
     }
     c += '<div class="tg-sub2">🗓️ ' + days + ' 天行程安排</div>'
-    c += buildItinerary(city, days, style, idx === 0, dayDates, flowMap)
+    c += buildItinerary(city, days, style, idx === 0, dayDates, flowMap, pace)
     c += '<div class="tg-sub2">🏛️ 必打卡景点</div><div class="tg-chips">' +
       (city.attractions || []).map(function (a) { return '<span class="tg-chip">' + esc(a) + '</span>' }).join('') + '</div>'
     c += '<div class="tg-sub2">🍜 不可错过的美味</div><div class="tg-chips">' +
