@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { createElement as h } from 'react'
-import { getAllCities } from '../utils/storage'
+import { getAllCities, getFlowForCity } from '../utils/storage'
 import { useApp } from '../store/AppContext'
 import { generateGuide } from '../engine/guideEngine'
 import styles from './GuidePage.module.css'
@@ -48,9 +48,15 @@ export default function GuidePage() {
     dispatch({ type: 'REMOVE_TRIP_CITY', payload: cityId });
   };
 
-  var doGenerate = function() {
+  var doGenerate = async function() {
     if (tripCities.length === 0) return;
-    var result = generateGuide(tripCities, state.tripRoutes || []);
+    // 拉取每个城市的真实人流/天气数据，喂给攻略引擎
+    var flowByCity = {};
+    try {
+      var flows = await Promise.all(tripCities.map(function(c) { return getFlowForCity(c.id).catch(function() { return []; }); }));
+      tripCities.forEach(function(c, i) { flowByCity[c.id] = flows[i] || []; });
+    } catch (e) { /* 人流数据缺失时降级为纯行程 */ }
+    var result = generateGuide(tripCities, state.tripRoutes || [], { flowByCity: flowByCity });
     setGuideHtml(result.html);
     setFullHtml(result.fullHtml || result.html);
     setEditText(result.text);

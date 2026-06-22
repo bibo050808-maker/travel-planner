@@ -194,7 +194,7 @@ function highlightFor(city, attr) {
   return pool[hashStr(city.id + attr) % pool.length]
 }
 
-function buildItinerary(city, days, style, isFirstCity) {
+function buildItinerary(city, days, style, isFirstCity, dayDates, flowMap) {
   var cfg = STYLE_CFG[style] || STYLE_CFG.classic
   var attrs = (city.attractions || []).slice()
   var nights = cfg.night
@@ -242,7 +242,17 @@ function buildItinerary(city, days, style, isFirstCity) {
       if (item.dur) rows += '<span class="tg-dur">⏱ ' + esc(item.dur) + '</span>'
       rows += '</div></div>'
     })
-    out.push('<div class="tg-day"><div class="tg-daynum">Day ' + (dd + 1) + '</div>' + rows + '</div>')
+    // 逐日真实日期 + 天气 + 人流（来自人流/天气引擎）
+    var dstr = dayDates && dayDates[dd] ? dayDates[dd] : ''
+    var fe = (dstr && flowMap) ? flowMap[dstr] : null
+    var meta = ''
+    if (dstr) {
+      var dp = dstr.split('-')
+      meta += '<span class="tg-ddate">' + parseInt(dp[1]) + '/' + parseInt(dp[2]) + '</span>'
+    }
+    if (fe && fe.weather) meta += '<span class="tg-wx">🌤️ ' + esc(fe.weather) + '</span>'
+    if (fe && fe.crowdLabel) meta += '<span class="tg-crowd tg-' + (fe.crowdColor || 'mid') + '">' + esc(fe.crowdLabel) + '</span>'
+    out.push('<div class="tg-day"><div class="tg-daynum"><span class="tg-dayn">Day ' + (dd + 1) + '</span>' + meta + '</div>' + rows + '</div>')
   }
   return out.join('')
 }
@@ -340,7 +350,16 @@ var GUIDE_CSS =
   '.tg-qstat{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#374151;margin-bottom:12px}' +
   '.tg-qstat span b{color:#1976d2}' +
   '.tg-day{background:#f7fafd;border:1px solid #eef2f7;border-radius:10px;padding:10px 12px;margin-bottom:10px}' +
-  '.tg-daynum{font-weight:800;color:#1976d2;font-size:13px;margin-bottom:6px}' +
+  '.tg-daynum{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:6px}' +
+  '.tg-dayn{font-weight:800;color:#1976d2;font-size:13px}' +
+  '.tg-ddate{font-size:11px;color:#94a3b8;font-weight:600}' +
+  '.tg-wx{font-size:11px;color:#0369a1;background:#e0f2fe;border-radius:5px;padding:1px 7px}' +
+  '.tg-crowd{font-size:11px;font-weight:700;border-radius:5px;padding:1px 7px}' +
+  '.tg-low{background:#e8f5e9;color:#2e7d32}.tg-mid{background:#fff8e1;color:#f57f17}.tg-high{background:#ffebee;color:#c62828}' +
+  '.tg-flow{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:8px 0 4px;font-size:12px}' +
+  '.tg-flowadv{font-weight:700;color:#334155}' +
+  '.tg-flowsum{color:#64748b}.tg-flowsum b{color:#1976d2}' +
+  '.tg-best{background:#ecfdf5;border-left:3px solid #34d399;border-radius:6px;padding:7px 11px;margin:4px 0 8px;font-size:12px;color:#065f46}.tg-best b{color:#047857}' +
   '.tg-slot{display:flex;gap:8px;align-items:flex-start;padding:4px 0}' +
   '.tg-tbadge{flex:none;font-size:11px;font-weight:700;color:#fff;border-radius:5px;padding:2px 7px;margin-top:1px;width:34px;text-align:center}' +
   '.tg-am{background:#f59e0b}.tg-pm{background:#3b82f6}.tg-ev{background:#8b5cf6}' +
@@ -370,12 +389,24 @@ var GUIDE_CSS =
   '@media(max-width:520px){.tg-grid{grid-template-columns:repeat(2,1fr)}.tg-hd h1{font-size:19px}}'
 
 // ---------------- 主函数 ----------------
+// ---------------- 日期 / 人流辅助 ----------------
+function fmtDateISO(d) {
+  var m = String(d.getMonth() + 1).padStart(2, '0')
+  var day = String(d.getDate()).padStart(2, '0')
+  return d.getFullYear() + '-' + m + '-' + day
+}
+function addDays(d, n) { var r = new Date(d); r.setDate(r.getDate() + n); return r }
+function shortDate(dstr) { var p = String(dstr).split('-'); return p.length === 3 ? (parseInt(p[1]) + '/' + parseInt(p[2])) : dstr }
+function flowToMap(arr) { var m = {}; (arr || []).forEach(function (f) { if (f && f.date) m[f.date] = f }); return m }
+
 export function generateGuide(tripCities, tripRoutes, options) {
   options = options || {}
   var style = options.style || 'classic'
   var days = Math.max(1, Math.min(5, options.daysPerCity || 3))
   var month = options.month || (new Date().getMonth() + 1)
   var tierMul = options.budgetTier === 'economy' ? 0.7 : options.budgetTier === 'lux' ? 1.4 : 1.0
+  var flowByCity = options.flowByCity || {}
+  var dayCursor = new Date()
 
   var ordered = orderCities(tripCities || [], tripRoutes || [])
   if (!ordered || ordered.length === 0) return { html: '', fullHtml: '', text: '' }
@@ -406,6 +437,13 @@ export function generateGuide(tripCities, tripRoutes, options) {
 
   // per city
   ordered.forEach(function (city, idx) {
+    // 该城逐日真实日期 + 人流/天气映射
+    var dayDates = []
+    for (var dq = 0; dq < days; dq++) dayDates.push(fmtDateISO(addDays(dayCursor, dq)))
+    dayCursor = addDays(dayCursor, days)
+    var cityFlow = flowByCity[city.id] || []
+    var flowMap = flowToMap(cityFlow)
+    var stats = getCrowdStatsForCity(cityFlow)
     c += '<section class="tg-city">'
     c += '<div class="tg-cityhd"><span class="nm">' + (idx + 1) + '. ' + esc(city.name) + '</span><span class="pv">' + esc(city.province) + '</span>' +
       (city.tags || []).map(function (t) { return '<span class="tg-tag">' + esc(t) + '</span>' }).join('') + '</div>'
@@ -413,8 +451,18 @@ export function generateGuide(tripCities, tripRoutes, options) {
       '<span>美食 <b>⭐' + city.foodScore + '</b></span>' +
       '<span>住宿 <b>¥' + city.avgHotelPrice + '/晚</b></span>' +
       '<span>最佳月份 <b>' + (city.bestMonths || []).map(function (m) { return m + '月' }).join('、') + '</b></span></div>'
+    // 人流概况 + 最佳出行日（来自人流引擎）
+    if (cityFlow.length > 0) {
+      var advice = stats.avgLevel <= 2 ? '✅ 人流较低，适合舒适游玩' : stats.avgLevel >= 4 ? '⚠️ 人流偏高，建议错峰' : 'ℹ️ 人流适中'
+      c += '<div class="tg-flow"><span class="tg-flowadv">🚦 ' + advice + '</span>' +
+        '<span class="tg-flowsum">未来两周 低 <b>' + stats.lowDays + '</b> · 中 <b>' + stats.midDays + '</b> · 高 <b>' + stats.highDays + '</b> 天</span></div>'
+      if (stats.bestDates && stats.bestDates.length > 0) {
+        c += '<div class="tg-best">📅 人流最低的好日子：' +
+          stats.bestDates.slice(0, 4).map(function (d) { return '<b>' + shortDate(d) + '</b>' }).join('、') + '（建议优先安排）</div>'
+      }
+    }
     c += '<div class="tg-sub2">🗓️ ' + days + ' 天行程安排</div>'
-    c += buildItinerary(city, days, style, idx === 0)
+    c += buildItinerary(city, days, style, idx === 0, dayDates, flowMap)
     c += '<div class="tg-sub2">🏛️ 必打卡景点</div><div class="tg-chips">' +
       (city.attractions || []).map(function (a) { return '<span class="tg-chip">' + esc(a) + '</span>' }).join('') + '</div>'
     c += '<div class="tg-sub2">🍜 不可错过的美味</div><div class="tg-chips">' +
